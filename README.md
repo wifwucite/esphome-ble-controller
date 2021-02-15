@@ -43,7 +43,7 @@ This mode controls the balance between BLE and WiFi. Note that both BLE and WiFi
   * 1 = mixed mode: This allows both BLE and WiFi traffic, but it may crash if there is too much traffic.
   * 2 = WiFi only: This disables all non-maintenance BLE characteristics in order to reduce BLE traffic to the minimum. It also sets the log level to `configuration`. You can use this mode for [OTA updates](https://esphome.io/components/ota.html).
 * Log level (read-write):  
-Sets the log level for logging over BLE. Currently the levels have to be specified as integer number between 0 (= no logging) and 7 (= very verbose).
+Sets the log level for logging over BLE. Currently the levels have to be specified as integer number between 0 (= no logging) and 7 (= very verbose).  
   ⚠️ **Note**: You cannot get finer logging than the overall log level specified for the [logger component](https://esphome.io/components/logger.html).
 * Log messages (read-only):  
 Provides the latest log message that matches the configure log level.
