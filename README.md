@@ -40,13 +40,13 @@ The maintenance BLE service is provided implicitly when you include `esp32_ble_c
 This mode controls the balance between BLE and WiFi. Note that both BLE and WiFi share the same physical 2,4 GHz antenna on the ESP32. So too much traffic on both of them can cause it to crash and reboot. Here the modes come in handy. Switching the mode triggers a safe reboot of the ESP32.
   * 0 = BLE only: This is supposed to switch WiFi off completely and allow only BLE traffic.  
   ⚠️ **Note**: This not working yet!
-  * 1 = mixed mode: This allows both BLE and WiFi traffic, but it may crash if there is too much traffic.
+  * 1 = mixed mode: This allows both BLE and WiFi traffic, but it may crash if there is too much traffic. (Short-lived WiFi connections for sending MQTT messages work fine, but for connecting to the web server `WiFi only` mode is recommended.)
   * 2 = WiFi only: This disables all non-maintenance BLE characteristics in order to reduce BLE traffic to the minimum. It also sets the log level to `configuration`. You can use this mode for [OTA updates](https://esphome.io/components/ota.html).
 * Log level (read-write):  
 Sets the log level for logging over BLE. Currently the levels have to be specified as integer number between 0 (= no logging) and 7 (= very verbose).  
   ⚠️ **Note**: You cannot get finer logging than the overall log level specified for the [logger component](https://esphome.io/components/logger.html).
 * Log messages (read-only):  
-Provides the latest log message that matches the configure log level.
+Provides the latest log message that matches the configured log level.
 
 ### Supported components
 
