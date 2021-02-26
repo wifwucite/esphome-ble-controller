@@ -29,8 +29,6 @@ public:
 
   void send_value(float value);
   void send_value(string value);
-
-  void set_value(bool value);
   void send_value(bool value);
 
 protected:
@@ -41,7 +39,7 @@ protected:
   virtual void on_characteristic_written() {}
   
 private:
-  virtual void onWrite(BLECharacteristic *characteristic);
+  virtual void onWrite(BLECharacteristic *characteristic); // inherited from BLECharacteristicCallbacks
 
   Nameable* component;
   BLECharacteristicInfoForHandler characteristicInfo;

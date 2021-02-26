@@ -4,6 +4,8 @@
 
 #include "esphome/core/log.h"
 
+#include "esp32_ble_controller.h"
+
 namespace esphome {
 namespace esp32_ble_controller {
 
@@ -50,7 +52,6 @@ void BLEComponentHandlerBase::setup(BLEServer* bleServer) {
   ESP_LOGCONFIG(TAG, "Setting up char %s", characteristicUUID.c_str());
 
   uint32_t properties = BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_NOTIFY;
-
   if (this->can_receive_writes()) {
     properties |= BLECharacteristic::PROPERTY_WRITE;
   }
@@ -64,6 +65,14 @@ void BLEComponentHandlerBase::setup(BLEServer* bleServer) {
   // );
   if (this->can_receive_writes()) {
     characteristic->setCallbacks(this);
+  }
+
+  if (global_ble_controller->get_security_enabled()) {
+    esp_gatt_perm_t permissions = ESP_GATT_PERM_READ_ENC_MITM;
+    if (this->can_receive_writes()) {
+      permissions |= ESP_GATT_PERM_WRITE_ENC_MITM; // signing (ESP_GATT_PERM_WRITE_SIGNED_MITM) did not work with iPhone
+    }
+    characteristic->setAccessPermissions(permissions);
   }
 
   BLEDescriptor* descriptor = new BLEDescriptor(BLEUUID((uint16_t)0x2901));
@@ -98,16 +107,12 @@ void BLEComponentHandlerBase::send_value(string value) {
   characteristic->notify();
 }
 
-void BLEComponentHandlerBase::set_value(bool raw_value) {
+void BLEComponentHandlerBase::send_value(bool raw_value) {
   auto object_id = component->get_object_id();
   ESP_LOGD(TAG, "Updating component %s to %d", object_id.c_str(), raw_value);
 
   uint16_t value = raw_value;
   characteristic->setValue(value);
-}
-
-void BLEComponentHandlerBase::send_value(bool value) {
-  set_value(value);
   characteristic->notify();
 }
 

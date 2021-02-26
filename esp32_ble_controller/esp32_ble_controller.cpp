@@ -6,6 +6,7 @@
 
 #include <BLEDevice.h>
 #include <BLEServer.h>
+#include <BLESecurity.h>
 
 #include "esphome/core/application.h"
 #include "esphome/core/log.h"
@@ -20,6 +21,35 @@ namespace esphome {
 namespace esp32_ble_controller {
 
 static const char *TAG = "esp32_ble_controller";
+
+void show_bonded_devices()
+{
+    int dev_num = esp_ble_get_bond_device_num();
+
+    esp_ble_bond_dev_t *dev_list = (esp_ble_bond_dev_t*) malloc(sizeof(esp_ble_bond_dev_t) * dev_num);
+    esp_ble_get_bond_device_list(&dev_num, dev_list);
+
+    ESP_LOGI(TAG, "Bonded BLE devices (%d):", dev_num);
+    for (int i = 0; i < dev_num; i++) {
+      esp_bd_addr_t& bd_address = dev_list[i].bd_addr;
+      ESP_LOGI(TAG, "%d) BD address %X:%X:%X:%X:%X:%X", i+1, bd_address[0], bd_address[1], bd_address[2], bd_address[3], bd_address[4], bd_address[5]);
+    }
+
+    free(dev_list);
+}
+
+void remove_all_bonded_devices()
+{
+    int dev_num = esp_ble_get_bond_device_num();
+
+    esp_ble_bond_dev_t *dev_list = (esp_ble_bond_dev_t*) malloc(sizeof(esp_ble_bond_dev_t) * dev_num);
+    esp_ble_get_bond_device_list(&dev_num, dev_list);
+    for (int i = 0; i < dev_num; i++) {
+        esp_ble_remove_bond_device(dev_list[i].bd_addr);
+    }
+
+    free(dev_list);
+}
 
 void ESP32BLEController::register_component(Nameable* component, const string& serviceUUID, const string& characteristicUUID, bool useBLE2902) {
   BLECharacteristicInfoForHandler info;
@@ -52,10 +82,14 @@ void ESP32BLEController::setup() {
 
   setup_controller();
 
+  enable_ble_security();
+
   // Start advertising
-  BLEAdvertising* advertising = BLEDevice::getAdvertising();
-  // advertising->setScanResponse(false);
-  // advertising->setMinPreferred(0x6);  // set value to 0x00 to not advertise this parameter
+  // BLEAdvertising* advertising = BLEDevice::getAdvertising();
+  // advertising->setMinInterval(0x800); // suggested default: 1.28s
+  // advertising->setMaxInterval(0x800);
+  // advertising->setMinPreferred(80); // = 100 ms, see https://www.novelbits.io/ble-connection-intervals/, https://www.novelbits.io/bluetooth-low-energy-advertisements-part-1/
+  // advertising->setMaxPreferred(800); // = 1000 ms
   BLEDevice::startAdvertising();
 }
 
@@ -82,6 +116,7 @@ bool ESP32BLEController::setup_ble() {
     mark_failed();
     return false;
   }
+
   err = esp_bluedroid_enable();
   if (err != ESP_OK) {
     ESP_LOGE(TAG, "esp_bluedroid_enable failed: %d", err);
@@ -165,7 +200,6 @@ void ESP32BLEController::initialize_ble_mode() {
   ESP_LOGCONFIG(TAG, "BLE mode: %d", mode);
 }
 
-
 void ESP32BLEController::set_ble_mode(BLEMaintenanceMode mode) {
   set_ble_mode((uint8_t) mode);
 }
@@ -186,9 +220,20 @@ void ESP32BLEController::set_ble_mode(uint8_t newMode) {
   }
 }
 
+void ESP32BLEController::set_security_enabled(bool enabled) {
+  security_enabled = enabled;
+}
+
 void ESP32BLEController::dump_config() {
   ESP_LOGCONFIG(TAG, "Bluetooth Low Energy Controller:");
   ESP_LOGCONFIG(TAG, "  BLE mode: %d", (uint8_t) bleMode);
+
+  if (get_security_enabled()) {
+    ESP_LOGCONFIG(TAG, "  security enabled");
+    show_bonded_devices();
+  } else {
+    ESP_LOGCONFIG(TAG, "  security disabled");
+  }
 }
 
 #ifdef USE_BINARY_SENSOR
@@ -225,6 +270,53 @@ void ESP32BLEController::update_component_state(C* component, S state) {
   if (handler != nullptr) {
     handler->send_value(state);
   }
+}
+
+void ESP32BLEController::enable_ble_security() {
+  if (!get_security_enabled()) {
+    return;
+  }
+
+  ESP_LOGD(TAG, "  Setting up BLE security");
+
+  // remove_all_bonded_devices();
+
+  BLEDevice::setEncryptionLevel(ESP_BLE_SEC_ENCRYPT_MITM);
+  BLEDevice::setSecurityCallbacks(this);
+
+  // see https://github.com/espressif/esp-idf/blob/b0150615dff529662772a60dcb57d5b559f480e2/examples/bluetooth/bluedroid/ble/gatt_security_server/tutorial/Gatt_Security_Server_Example_Walkthrough.md
+  BLESecurity security;
+  security.setAuthenticationMode(ESP_LE_AUTH_REQ_SC_MITM_BOND);
+  security.setCapability(ESP_IO_CAP_OUT);
+  security.setInitEncryptionKey(ESP_BLE_ENC_KEY_MASK | ESP_BLE_ID_KEY_MASK);
+  security.setRespEncryptionKey(ESP_BLE_ENC_KEY_MASK | ESP_BLE_ID_KEY_MASK);
+  security.setKeySize(16);
+
+  uint8_t auth_option = ESP_BLE_ONLY_ACCEPT_SPECIFIED_AUTH_ENABLE;
+  esp_ble_gap_set_security_param(ESP_BLE_SM_ONLY_ACCEPT_SPECIFIED_SEC_AUTH, &auth_option, sizeof(uint8_t));
+}
+
+uint32_t ESP32BLEController::onPassKeyRequest() {
+  ESP_LOGD(TAG, "onPassKeyRequest");
+  return 123456;
+}
+
+void ESP32BLEController::onPassKeyNotify(uint32_t pass_key) {
+  ESP_LOGI(TAG, "onPassKeyNotify %d", pass_key);
+}
+
+bool ESP32BLEController::onSecurityRequest() {
+  ESP_LOGD(TAG, "onSecurityRequest");
+  return true;
+}
+
+void ESP32BLEController::onAuthenticationComplete(esp_ble_auth_cmpl_t) {
+  ESP_LOGD(TAG, "onAuthenticationComplete");
+}
+
+bool ESP32BLEController::onConfirmPIN(uint32_t pin) {
+  ESP_LOGD(TAG, "onConfirmPIN");
+  return true;
 }
 
 ESP32BLEController* global_ble_controller = nullptr;

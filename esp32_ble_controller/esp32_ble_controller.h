@@ -5,6 +5,7 @@
 #include <vector>
 
 #include <BLEServer.h>
+#include <BLESecurity.h>
 
 #include "esphome/core/component.h"
 #include "esphome/core/controller.h"
@@ -28,7 +29,7 @@ enum class BLEMaintenanceMode : uint8_t { BLE_ONLY, MIXED, WIFI_ONLY };
  * Bluetooth Low Energy controller for ESP32.
  * @brief BLE controller for ESP32
  */
-class ESP32BLEController : public Component, public Controller {
+class ESP32BLEController : public Component, public Controller, private BLESecurityCallbacks {
 public:
   void register_component(Nameable* component, const string& serviceUUID, const string& characteristicUUID, bool useBLE2902 = true);
 
@@ -41,6 +42,9 @@ public:
   inline BLEMaintenanceMode get_ble_mode() const { return bleMode; }
   void set_ble_mode(BLEMaintenanceMode mode);
   void set_ble_mode(uint8_t mode);
+
+  void set_security_enabled(bool enabled);
+  inline bool get_security_enabled() const { return security_enabled; }
 
   // Controller methods:
 #ifdef USE_BINARY_SENSOR
@@ -78,11 +82,20 @@ private:
   template <typename C> void setup_ble_service_for_component(C* component, BLEComponentHandlerBase* (*handler_creator)(C*, const BLECharacteristicInfoForHandler&));
   template <typename C, typename S> void update_component_state(C* component, S state);
 
+  void enable_ble_security();
+  virtual uint32_t onPassKeyRequest(); // inherited from BLESecurityCallbacks
+  virtual void onPassKeyNotify(uint32_t pass_key); // inherited from BLESecurityCallbacks
+  virtual bool onSecurityRequest(); // inherited from BLESecurityCallbacks
+  virtual void onAuthenticationComplete(esp_ble_auth_cmpl_t); // inherited from BLESecurityCallbacks
+  virtual bool onConfirmPIN(uint32_t pin); // inherited from BLESecurityCallbacks
+  
 private:
   BLEServer* bleServer;
 
   BLEMaintenanceMode bleMode;
   ESPPreferenceObject bleModePreference;
+
+  bool security_enabled{true};
 
   BLEMaintenanceHandler* maintenanceHandler;
 

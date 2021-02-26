@@ -8,6 +8,9 @@ This component provides a Bluetooth Low Energy (BLE) controller for [ESPHome](ht
 Copy the `esp32_ble_controller` directory into your ESPHome `custom_components` directory. (If you do not have such a directory it, then create it in your ESPHome configuration directory, i.e. the directory storing your yaml files.)
 
 ## Configuration
+
+### Getting started
+
 The following configuration shows how to make a (template) switch accessible via BLE:
 ```yaml
 switch:
@@ -30,7 +33,19 @@ For the registration you provide a unique service UUID and a unique characterist
 
 If you flash this example configuration and connect to your ESP32 device from your phone, you can see device information similar to the data displayed in the image above. Note how the service UUID and characteristic UUID provided in the registration of the template switch now show up. Besides the switch that was configured explicitly there is also a so-called maintenance service which is provided by the controller automatically. It allows you to set BLE mode and access some logging related characteristics, which will be explained below.
 
+### Configuration options
+
+```yaml
+esp32_ble_controller:
+  id: ble_controller
+  security_mode: show_pin # default is 'show_pin', 'none' is also possible
+```
+
 ## Features
+
+### BLE security
+
+By default security is switched on, which means that the ESP32 has to paired (bonded) when it is used for the first time with a new device. (This feature can be switched off via configuration.) Protection against man-in-the-middle attacks is enabled. The device to be paired sends a pass key (a 6 digit PIN) to the ESP32, which is logged (on info level.) (As a future extension I would like to add an automation that allows showing the PIN on a display until the paring is complete.)
 
 ### Maintenance service
 
