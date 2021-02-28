@@ -72,6 +72,11 @@ public:
   void on_climate_update(climate::Climate *obj) override;
 #endif
 
+  void add_on_show_pass_key_callback(std::function<void(string)> &&f);
+
+  /// Executes a given function in the main loop of the app.
+  void execute_in_loop(std::function<void()> &&f);
+
 private:
   void initialize_ble_mode();
 
@@ -101,6 +106,8 @@ private:
 
   unordered_map<string, BLECharacteristicInfoForHandler> infoForComponent;
   unordered_map<string, BLEComponentHandlerBase*> handlerForComponent;
+
+  CallbackManager<void(string)> show_pass_key_callbacks{};
 };
 
 /**

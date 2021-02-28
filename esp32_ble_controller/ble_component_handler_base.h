@@ -37,6 +37,8 @@ protected:
 
   virtual bool can_receive_writes() { return false; }
   virtual void on_characteristic_written() {}
+
+  bool is_security_enabled();
   
 private:
   virtual void onWrite(BLECharacteristic *characteristic); // inherited from BLECharacteristicCallbacks

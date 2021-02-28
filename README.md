@@ -38,7 +38,21 @@ If you flash this example configuration and connect to your ESP32 device from yo
 ```yaml
 esp32_ble_controller:
   id: ble_controller
-  security_mode: show_pin # default is 'show_pin', 'none' is also possible
+
+  # allows to enable or disable security, default is 'show_pass_key'
+  # Options:
+  # - none: 
+  #     disables security
+  # - show_pass_key: 
+  #     upon first pairing the other device (your phone) sends a 6-digit pass key to the ESP and the ESP is supposed to display so that it can be entered on the other device
+  security_mode: show_pass_key
+
+  # automation that is invoked when the pass key should be displayed, the pass key is available in the automation as "pass_key" variable of type std::string
+  # the example below just logs the pass keys
+  on_show_pass_key:
+  - logger.log:
+      format: "The pass key is %s"
+      args: 'pass_key.c_str()'
 ```
 
 ## Features
