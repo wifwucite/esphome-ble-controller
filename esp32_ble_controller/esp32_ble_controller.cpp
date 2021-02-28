@@ -279,7 +279,7 @@ void ESP32BLEController::enable_ble_security() {
 
   ESP_LOGD(TAG, "  Setting up BLE security");
 
-  // remove_all_bonded_devices();
+  //remove_all_bonded_devices();
 
   BLEDevice::setEncryptionLevel(ESP_BLE_SEC_ENCRYPT_MITM);
   BLEDevice::setSecurityCallbacks(this);

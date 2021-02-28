@@ -37,6 +37,8 @@ private:
   void on_log_level_written();
 #endif
 
+  bool is_security_enabled();
+  
 private:
   BLEService* maintenanceService;
 

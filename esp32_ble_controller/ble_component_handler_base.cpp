@@ -11,24 +11,6 @@ namespace esp32_ble_controller {
 
 static const char *TAG = "ble_component_handler_base";
 
-/* class MyCallbacks: public BLECharacteristicCallbacks {
-public:
-    MyCallbacks(BLEComponentHandler& my_handler) : my_handler(my_handler) {}
-
-    void onWrite(BLECharacteristic *characteristic) {
-      my_handler.on_characteristic_written();
-      std::string value = characteristic->getValue();
-
-      if (value.length() > 0) {
-        ESP_LOGD(TAG, "Value = %s", value.c_str());
-      }
-    }
-
-private:
-  BLEComponentHandler& my_handler;
-};
- */
-
 BLEComponentHandlerBase::BLEComponentHandlerBase(Nameable* component, const BLECharacteristicInfoForHandler& characteristicInfo) 
   : component(component), characteristicInfo(characteristicInfo)
 {}
@@ -67,23 +49,26 @@ void BLEComponentHandlerBase::setup(BLEServer* bleServer) {
     characteristic->setCallbacks(this);
   }
 
-  if (global_ble_controller->get_security_enabled()) {
-    esp_gatt_perm_t permissions = ESP_GATT_PERM_READ_ENC_MITM;
-    if (this->can_receive_writes()) {
-      permissions |= ESP_GATT_PERM_WRITE_ENC_MITM; // signing (ESP_GATT_PERM_WRITE_SIGNED_MITM) did not work with iPhone
-    }
-    characteristic->setAccessPermissions(permissions);
+  esp_gatt_perm_t access_permissions;
+  if (is_security_enabled()) {
+    access_permissions = ESP_GATT_PERM_READ_ENC_MITM | ESP_GATT_PERM_WRITE_ENC_MITM; // signing (ESP_GATT_PERM_WRITE_SIGNED_MITM) did not work with iPhone
+  } else {
+    access_permissions = ESP_GATT_PERM_READ | ESP_GATT_PERM_WRITE;
   }
+  characteristic->setAccessPermissions(access_permissions);
 
-  BLEDescriptor* descriptor = new BLEDescriptor(BLEUUID((uint16_t)0x2901));
-  descriptor->setValue(component->get_name());
-  characteristic->addDescriptor(descriptor);
+  BLEDescriptor* descriptor_2901 = new BLEDescriptor(BLEUUID((uint16_t)0x2901));
+  descriptor_2901->setValue(component->get_name());
+  descriptor_2901->setAccessPermissions(access_permissions);
+  characteristic->addDescriptor(descriptor_2901);
 
   if (characteristicInfo.useBLE2902)
   {
     // With this descriptor clients can switch notifications on and off, but we want to send notifications anyway as long as we are connected. The homebridge plug-in cannot turn notifications on and off.
     // https://www.bluetooth.com/specifications/gatt/viewer?attributeXmlFile=org.bluetooth.descriptor.gatt.client_characteristic_configuration.xml
-    characteristic->addDescriptor(new BLE2902());
+    BLE2902* descriptor_2902 = new BLE2902();
+    descriptor_2902->setAccessPermissions(access_permissions);
+    characteristic->addDescriptor(descriptor_2902);
   }
 
   service->start();
@@ -119,6 +104,10 @@ void BLEComponentHandlerBase::send_value(bool raw_value) {
 void BLEComponentHandlerBase::onWrite(BLECharacteristic *characteristic) {
   ESP_LOGD(TAG, "onWrite called");
   on_characteristic_written();
+}
+
+bool BLEComponentHandlerBase::is_security_enabled() {
+  return global_ble_controller->get_security_enabled();
 }
 
 } // namespace esp32_ble_controller

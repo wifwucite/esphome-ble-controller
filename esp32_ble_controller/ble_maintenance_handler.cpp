@@ -32,10 +32,21 @@ void BLEMaintenanceHandler::setup(BLEServer* bleServer) {
   bleModeCharacteristic->setValue(mode);
   bleModeCharacteristic->setCallbacks(this);
 
-  BLEDescriptor* modeDescriptor = new BLEDescriptor(BLEUUID((uint16_t)0x2901));
-  modeDescriptor->setValue("BLE Mode (0=BLE, 1=mixed, 2=WiFi)");
-  bleModeCharacteristic->addDescriptor(modeDescriptor);
-  bleModeCharacteristic->addDescriptor(new BLE2902());
+  esp_gatt_perm_t access_permissions;
+  if (is_security_enabled()) {
+    access_permissions = ESP_GATT_PERM_READ_ENC_MITM | ESP_GATT_PERM_WRITE_ENC_MITM; // signing (ESP_GATT_PERM_WRITE_SIGNED_MITM) did not work with iPhone
+  } else {
+    access_permissions = ESP_GATT_PERM_READ | ESP_GATT_PERM_WRITE;
+  }
+  bleModeCharacteristic->setAccessPermissions(access_permissions);
+
+  BLEDescriptor* modeDescriptor_user_description = new BLEDescriptor(BLEUUID((uint16_t)0x2901));
+  modeDescriptor_user_description->setAccessPermissions(access_permissions);
+  modeDescriptor_user_description->setValue("BLE Mode (0=BLE, 1=mixed, 2=WiFi)");
+  bleModeCharacteristic->addDescriptor(modeDescriptor_user_description);
+  BLEDescriptor* modeDescriptor_configuration = new BLE2902();
+  modeDescriptor_configuration->setAccessPermissions(access_permissions);
+  bleModeCharacteristic->addDescriptor(modeDescriptor_configuration);
 
 #ifdef USE_LOGGER
   log_level = ESPHOME_LOG_LEVEL;
@@ -47,24 +58,32 @@ void BLEMaintenanceHandler::setup(BLEServer* bleServer) {
       BLECharacteristic::PROPERTY_READ //
       | BLECharacteristic::PROPERTY_NOTIFY
   );
+  loggingCharacteristic->setAccessPermissions(access_permissions);
 
-  BLEDescriptor* loggingDescriptor = new BLEDescriptor(BLEUUID((uint16_t)0x2901));
-  loggingDescriptor->setValue("Log messages");
-  loggingCharacteristic->addDescriptor(loggingDescriptor);
-  loggingCharacteristic->addDescriptor(new BLE2902());
+  BLEDescriptor* loggingDescriptor_2901 = new BLEDescriptor(BLEUUID((uint16_t)0x2901));
+  loggingDescriptor_2901->setAccessPermissions(access_permissions);
+  loggingDescriptor_2901->setValue("Log messages");
+  loggingCharacteristic->addDescriptor(loggingDescriptor_2901);
+  BLE2902* loggingDescriptor_2902 = new BLE2902();
+  loggingDescriptor_2902->setAccessPermissions(access_permissions);
+  loggingCharacteristic->addDescriptor(loggingDescriptor_2902);
   
   logLevelCharacteristic = service->createCharacteristic(CHARACTERISTIC_UUID_LOG_LEVEL,
       BLECharacteristic::PROPERTY_READ //
       | BLECharacteristic::PROPERTY_NOTIFY //
       | BLECharacteristic::PROPERTY_WRITE
   );
+  logLevelCharacteristic->setAccessPermissions(access_permissions);
   logLevelCharacteristic->setValue(log_level);
   logLevelCharacteristic->setCallbacks(this);
 
-  BLEDescriptor* logLevelDescriptor = new BLEDescriptor(BLEUUID((uint16_t)0x2901));
-  logLevelDescriptor->setValue("Log level (0=None, 4=Config, 5=Debug)");
-  logLevelCharacteristic->addDescriptor(logLevelDescriptor);
-  logLevelCharacteristic->addDescriptor(new BLE2902());
+  BLEDescriptor* logLevelDescriptor_2901 = new BLEDescriptor(BLEUUID((uint16_t)0x2901));
+  logLevelDescriptor_2901->setAccessPermissions(access_permissions);
+  logLevelDescriptor_2901->setValue("Log level (0=None, 4=Config, 5=Debug)");
+  logLevelCharacteristic->addDescriptor(logLevelDescriptor_2901);
+  BLE2902* logLevelDescriptor_2902 = new BLE2902();
+  logLevelDescriptor_2902->setAccessPermissions(access_permissions);
+  logLevelCharacteristic->addDescriptor(logLevelDescriptor_2902);
 #endif
 
   service->start();
@@ -138,6 +157,10 @@ void BLEMaintenanceHandler::send_log_message(int level, const char *tag, const c
   }
 }
 #endif
+
+bool BLEMaintenanceHandler::is_security_enabled() {
+  return global_ble_controller->get_security_enabled();
+}
 
 } // namespace esp32_ble_controller
 } // namespace esphome
