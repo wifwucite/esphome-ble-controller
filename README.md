@@ -59,7 +59,7 @@ esp32_ble_controller:
 
 ### BLE security
 
-By default security is switched on, which means that the ESP32 has to paired (bonded) when it is used for the first time with a new device. (This feature can be switched off via configuration.) Protection against man-in-the-middle attacks is enabled. The device to be paired sends a pass key (a 6 digit PIN) to the ESP32, which is logged (on info level.) (As a future extension I would like to add an automation that allows showing the PIN on a display until the paring is complete.)
+By default security is switched on, which means that the ESP32 has to paired (bonded) when it is used for the first time with a new device. (This feature can be switched off via configuration.) Protection against man-in-the-middle attacks is enabled. The device to be paired sends a pass key (a 6 digit PIN) to the ESP32, which is logged (on info level.) There is also an automation that allows showing the pass key on a display (until the paring is complete).
 
 ### Maintenance service
 
