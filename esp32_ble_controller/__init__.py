@@ -20,6 +20,8 @@ SECURTY_MODE_OPTIONS = {
 
 CONF_ON_SHOW_PASS_KEY = "on_show_pass_key"
 BLEControllerShowPassKeyTrigger = esp32_ble_controller_ns.class_('BLEControllerShowPassKeyTrigger', automation.Trigger.template())
+CONF_ON_AUTHENTICATION_COMPLETE = "on_authentication_complete"
+BLEControllerAuthenticationCompleteTrigger = esp32_ble_controller_ns.class_('BLEControllerAuthenticationCompleteTrigger', automation.Trigger.template())
 
 ESP32BLEController = esp32_ble_controller_ns.class_('ESP32BLEController', cg.Component, cg.Controller)
 
@@ -29,7 +31,11 @@ CONFIG_SCHEMA = cv.Schema({
         cv.enum(SECURTY_MODE_OPTIONS),
     cv.Optional(CONF_ON_SHOW_PASS_KEY): automation.validate_automation({
         cv.GenerateID(CONF_TRIGGER_ID): cv.declare_id(BLEControllerShowPassKeyTrigger),
-    }),})
+    }),
+    cv.Optional(CONF_ON_AUTHENTICATION_COMPLETE): automation.validate_automation({
+        cv.GenerateID(CONF_TRIGGER_ID): cv.declare_id(BLEControllerAuthenticationCompleteTrigger),
+    }),
+    })
 
 
 def to_code(config):
@@ -41,3 +47,7 @@ def to_code(config):
     for conf in config.get(CONF_ON_SHOW_PASS_KEY, []):
         trigger = cg.new_Pvariable(conf[CONF_TRIGGER_ID], var)
         yield automation.build_automation(trigger, [(cg.std_string, 'pass_key')], conf)
+
+    for conf in config.get(CONF_ON_AUTHENTICATION_COMPLETE, []):
+        trigger = cg.new_Pvariable(conf[CONF_TRIGGER_ID], var)
+        yield automation.build_automation(trigger, [], conf)

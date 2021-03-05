@@ -273,7 +273,11 @@ void ESP32BLEController::update_component_state(C* component, S state) {
 }
 
 void ESP32BLEController::add_on_show_pass_key_callback(std::function<void(string)> &&f) {
-  show_pass_key_callbacks.add(std::move(f));
+  on_show_pass_key_callbacks.add(std::move(f));
+}
+
+void ESP32BLEController::add_on_authentication_complete_callback(std::function<void()> &&f) {
+  on_authentication_complete_callbacks.add(std::move(f));
 }
 
 void ESP32BLEController::execute_in_loop(std::function<void()> &&f) {
@@ -313,7 +317,7 @@ void ESP32BLEController::onPassKeyNotify(uint32_t pass_key) {
   snprintf(pass_key_digits, PASS_KEY_LENGTH + 1, "%0" TOSTRING(PASS_KEY_LENGTH) "d", pass_key);
   string pass_key_str(pass_key_digits);
 
-  auto& callbacks = show_pass_key_callbacks;
+  auto& callbacks = on_show_pass_key_callbacks;
   global_ble_controller->execute_in_loop([&callbacks, pass_key_str](){ 
     ESP_LOGI(TAG, "BLE authentication - pass key: %s", pass_key_str.c_str());
     callbacks.call(pass_key_str);
@@ -321,21 +325,25 @@ void ESP32BLEController::onPassKeyNotify(uint32_t pass_key) {
 }
 
 void ESP32BLEController::onAuthenticationComplete(esp_ble_auth_cmpl_t) {
-  global_ble_controller->execute_in_loop([this](){ ESP_LOGD(TAG, "BLE authentication - completed"); });
+  auto& callbacks = on_authentication_complete_callbacks;
+  global_ble_controller->execute_in_loop([&callbacks](){ 
+    ESP_LOGD(TAG, "BLE authentication - completed");
+    callbacks.call();
+  });
 }
 
 uint32_t ESP32BLEController::onPassKeyRequest() {
-  global_ble_controller->execute_in_loop([this](){ ESP_LOGD(TAG, "onPassKeyRequest"); });
+  global_ble_controller->execute_in_loop([](){ ESP_LOGD(TAG, "onPassKeyRequest"); });
   return 123456;
 }
 
 bool ESP32BLEController::onSecurityRequest() {
-  global_ble_controller->execute_in_loop([this](){ ESP_LOGD(TAG, "onSecurityRequest"); });
+  global_ble_controller->execute_in_loop([](){ ESP_LOGD(TAG, "onSecurityRequest"); });
   return true;
 }
 
 bool ESP32BLEController::onConfirmPIN(uint32_t pin) {
-  global_ble_controller->execute_in_loop([this](){ ESP_LOGD(TAG, "onConfirmPIN"); });
+  global_ble_controller->execute_in_loop([](){ ESP_LOGD(TAG, "onConfirmPIN"); });
   return true;
 }
 

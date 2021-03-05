@@ -73,6 +73,7 @@ public:
 #endif
 
   void add_on_show_pass_key_callback(std::function<void(string)> &&f);
+  void add_on_authentication_complete_callback(std::function<void()> &&f);
 
   /// Executes a given function in the main loop of the app.
   void execute_in_loop(std::function<void()> &&f);
@@ -107,7 +108,8 @@ private:
   unordered_map<string, BLECharacteristicInfoForHandler> infoForComponent;
   unordered_map<string, BLEComponentHandlerBase*> handlerForComponent;
 
-  CallbackManager<void(string)> show_pass_key_callbacks{};
+  CallbackManager<void(string)> on_show_pass_key_callbacks;
+  CallbackManager<void()> on_authentication_complete_callbacks;
 };
 
 /**

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "esphome/components/esp32_ble_controller/ble_component_handler_base.h"
+#include "ble_component_handler_base.h"
 
 using std::string;
 

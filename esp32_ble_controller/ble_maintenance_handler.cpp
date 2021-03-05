@@ -1,8 +1,6 @@
-#include "ble_maintenance_handler.h"
-
-#include <regex>
-
 #include <BLE2902.h>
+
+#include "ble_maintenance_handler.h"
 
 #ifdef USE_LOGGER
 #include "esphome/components/logger/logger.h"

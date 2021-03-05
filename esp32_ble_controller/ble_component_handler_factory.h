@@ -1,8 +1,8 @@
 #pragma once
 
-#include "ble_component_handler_base.h"
-
 #include "esphome/core/defines.h"
+
+#include "ble_component_handler_base.h"
 
 #ifdef USE_BINARY_SENSOR
 #include "esphome/components/binary_sensor/binary_sensor.h"

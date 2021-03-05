@@ -109,9 +109,5 @@ bool BLEComponentHandlerBase::is_security_enabled() {
   return global_ble_controller->get_security_enabled();
 }
 
-bool BLEComponentHandlerBase::is_security_enabled() {
-  return global_ble_controller->get_security_enabled();
-}
-
 } // namespace esp32_ble_controller
 } // namespace esphome
