@@ -5,7 +5,7 @@ This component provides a Bluetooth Low Energy (BLE) controller for [ESPHome](ht
 ⚠️ **Note**: This controller only works with ESP32 micro-controllers, not with ESP8266 chips because they do not offer built-in BLE support.
 
 ## Installation
-Copy the `esp32_ble_controller` directory into your ESPHome `custom_components` directory. (If you do not have such a directory it, then create it in your ESPHome configuration directory, i.e. the directory storing your yaml files.)
+Copy the `esp32_ble_controller` directory into your ESPHome `custom_components` directory. (If you do not have such a directory yet, then create it in your ESPHome configuration directory, i.e. the directory storing your yaml files.)
 
 ## Configuration
 
