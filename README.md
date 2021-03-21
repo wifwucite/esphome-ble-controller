@@ -32,7 +32,7 @@ Make sure to assign an id to each component you want to expose via bluetooth.
 Then you add `esp32_ble_controller` to include the controller itself. 
 In order to make a component available you need to define a corresponding BLE characteristic that is contained in a BLE service. If you are not familiar with BLE you do need to worry much. For each characteristic and each service you simply need a different UUID, which you could generate [here](https://www.uuidgenerator.net). A service is basically used for grouping characteristics, so it can contain multiple characteristics. Each characteristic exposes a component, which is configured via the `exposes` property specifying the id of the respective component.
 
-If you flash this example configuration and connect to your ESP32 device from your phone, you can see device information similar to the data displayed in the image above. Note how the service UUID and characteristic UUID provided in the characteristic configuration of the template switch now show up. Besides the switch that was configured explicitly there is also a so-called maintenance service which is provided by the controller automatically. It allows you to set BLE mode and access some logging related characteristics, which will be explained below.
+If you flash this example configuration and connect to your ESP32 device from your phone, you can see device information similar to the data displayed in the image above. Note how the service UUID and characteristic UUID provided in the characteristic configuration of the template switch now show up. Besides the switch that was configured explicitly there is also a so-called maintenance service which is provided by the controller automatically. It allows you to set the BLE mode and access some logging related characteristics, which will be explained below.
 
 ### Configuration options
 
@@ -62,7 +62,7 @@ esp32_ble_controller:
   # the example below just logs the pass keys
   on_show_pass_key:
   - logger.log:
-      format: "The pass key is %s"
+      format: "pass key is %s"
       args: 'pass_key.c_str()'
   # automation that is invoked when the authentication is complete (either with success or failure)
   on_authentication_complete:
@@ -100,7 +100,7 @@ Provides the latest log message that matches the configured log level.
 
 # Examples
 
-Configuration to show the pass key during authentication on a display like in this picture:
+Configuration to show the 6-digit pass key during authentication on a display:
 ![BLE pass key on display](BLE-PassKey.png)
 
 ```yaml
