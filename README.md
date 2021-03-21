@@ -20,24 +20,35 @@ switch:
     id: template_switch
 
 esp32_ble_controller:
-  id: ble_controller
-
-custom_component:
-- lambda: |-
-    id(ble_controller)->register_component(id(template_switch), "4fafc201-1fb5-459e-8fcc-c5c9c331915d", "beb5483e-36e1-4688-b7f5-ea07361b26ab");
-    return {};
+  services:
+  - service: "4fafc201-1fb5-459e-8fcc-c5c9c331915d"
+    characteristics:
+      - characteristic: "beb5483e-36e1-4688-b7f5-ea07361b26ab"
+        exposes: template_switch
 ```
 
-You define your sensors, switches ane other compoments as usual (like the [template switch](https://esphome.io/components/switch/template.html) in the example). Then you add `esp32_ble_controller`to include the controller itself and assign an id to it, which you will need later. After that you need to register every component that you want expose via BLE. Currently this is done in a `custom_component` section, which actually does not create any components; it is just a way to add the registration code to `main.cpp`. (And I plan to make registration more elegant in the future.)
-For the registration you provide a unique service UUID and a unique characteristic UUID, which you could generate [here](https://www.uuidgenerator.net). If you are not familiar with BLE you do need to worry much, the only thing you must ensure is that all characteristic UUIDs (the final ones in the `register_component` calls) are really unique. Service UUIDs can be reused, then the corresponding characteristics will be placed in the same BLE service.
+You define your sensors, switches and other compoments as usual (like the [template switch](https://esphome.io/components/switch/template.html) in the example). 
+Make sure to assign an id to each component you want to expose via bluetooth. 
+Then you add `esp32_ble_controller` to include the controller itself. 
+In order to make a component available you need to define a corresponding BLE characteristic that is contained in a BLE service. If you are not familiar with BLE you do need to worry much. For each characteristic and each service you simply need a different UUID, which you could generate [here](https://www.uuidgenerator.net). A service is basically used for grouping characteristics, so it can contain multiple characteristics. Each characteristic exposes a component, which is configured via `exposes` and specifying the id of the respective component.
 
-If you flash this example configuration and connect to your ESP32 device from your phone, you can see device information similar to the data displayed in the image above. Note how the service UUID and characteristic UUID provided in the registration of the template switch now show up. Besides the switch that was configured explicitly there is also a so-called maintenance service which is provided by the controller automatically. It allows you to set BLE mode and access some logging related characteristics, which will be explained below.
+If you flash this example configuration and connect to your ESP32 device from your phone, you can see device information similar to the data displayed in the image above. Note how the service UUID and characteristic UUID provided in the characteristic configuration of the template switch now show up. Besides the switch that was configured explicitly there is also a so-called maintenance service which is provided by the controller automatically. It allows you to set BLE mode and access some logging related characteristics, which will be explained below.
 
 ### Configuration options
 
 ```yaml
 esp32_ble_controller:
-  id: ble_controller
+  services:
+  - service: <service 1 UUID>
+    characteristics:
+      - characteristic: <characteristic 1.1 UUID>
+        exposes: <id of component>
+      - characteristic: <characteristic 1.2 UUID>
+        exposes: <id of component>
+  - service: <service 2 UUID>
+    characteristics:
+      - characteristic: <characteristic 2.1 UUID>
+        exposes: <id of component>
 
   # allows to enable or disable security, default is 'show_pass_key'
   # Options:
@@ -86,3 +97,47 @@ Provides the latest log message that matches the configured log level.
 * [Sensor](https://esphome.io/components/sensor/index.html) (read-only)
 * [Text sensor](https://esphome.io/components/text_sensor/index.html) (read-only)
 * [Switch](https://esphome.io/components/switch/index.html) (read-write)
+
+# Examples
+
+Configuration to show the pass key during authentication on a display like in this picture:
+![BLE pass key on display](BLE-PassKey.png)
+
+```yaml
+display:
+  - platform: ...
+    ...
+    pages:
+      - id: page_standard
+        lambda: |-
+          // print standard stuff
+      - id: page_ble_pass_key
+        lambda: |-
+          it.print(0, 0, id(my_font), TextAlign::TOP_LEFT, "Bluetooth");
+          it.print(0, 20, id(my_font), TextAlign::TOP_LEFT, "Key");
+          it.print(0, 40, id(my_font), TextAlign::TOP_LEFT, id(ble_pass_key).c_str());
+
+globals:
+  - id: ble_pass_key
+    type: std::string
+
+esp32_ble_controller:
+  services:
+  - service: "4fafc201-1fb5-459e-8fcc-c5c9c331915d"
+    characteristics:
+      - characteristic: "beb5483e-36e1-4688-b7f5-ea07361b26ab"
+        exposes: template_switch
+  security_mode: show_pass_key
+  on_show_pass_key:
+    then:
+      - lambda: |-
+          id(ble_pass_key) = pass_key;
+      - display.page.show: page_ble_pass_key
+      - component.update: my_display
+  on_authentication_complete:
+    then:
+      - lambda: |-
+          id(ble_pass_key) = "";
+      - display.page.show: page_standard
+      - component.update: my_display
+```
