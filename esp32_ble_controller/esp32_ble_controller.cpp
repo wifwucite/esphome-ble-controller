@@ -281,7 +281,14 @@ void ESP32BLEController::add_on_authentication_complete_callback(std::function<v
 }
 
 void ESP32BLEController::execute_in_loop(std::function<void()> &&f) {
-  defer(std::move(f));
+  deferedFunctionsForLoop.push(std::move(f));
+}
+
+void ESP32BLEController::loop() {
+  std::function<void()> deferred_function;
+  while (deferedFunctionsForLoop.take(deferred_function)) {
+    deferred_function();
+  }
 }
 
 void ESP32BLEController::enable_ble_security() {

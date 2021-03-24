@@ -11,6 +11,7 @@
 #define CHARACTERISTIC_UUID_MODE      "9484a6ab-54c9-4432-bff9-13bada528ab7"
 #define CHARACTERISTIC_UUID_LOGGING   "a1083f3b-0ad6-49e0-8a9d-56eb5bf462ca"
 #define CHARACTERISTIC_UUID_LOG_LEVEL "d2af61d2-5086-4a99-94e9-6638edc3d14c"
+
 namespace esphome {
 namespace esp32_ble_controller {
 

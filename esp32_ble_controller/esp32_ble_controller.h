@@ -12,6 +12,8 @@
 #include "esphome/core/defines.h"
 #include "esphome/core/preferences.h"
 
+#include "thread_safe_bounded_queue.h"
+
 #include "ble_component_handler_base.h"
 
 using std::string;
@@ -38,6 +40,8 @@ public:
   void setup() override;
 
   void dump_config() override;
+
+  void loop() override;
 
   inline BLEMaintenanceMode get_ble_mode() const { return bleMode; }
   void set_ble_mode(BLEMaintenanceMode mode);
@@ -107,6 +111,8 @@ private:
 
   unordered_map<string, BLECharacteristicInfoForHandler> infoForComponent;
   unordered_map<string, BLEComponentHandlerBase*> handlerForComponent;
+
+  ThreadSafeBoundedQueue<std::function<void()>> deferedFunctionsForLoop{16};
 
   CallbackManager<void(string)> on_show_pass_key_callbacks;
   CallbackManager<void()> on_authentication_complete_callbacks;
