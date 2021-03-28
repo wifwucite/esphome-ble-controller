@@ -25,7 +25,7 @@ public:
   BLEComponentHandlerBase(Nameable* component, const BLECharacteristicInfoForHandler& characteristic_info);
   virtual ~BLEComponentHandlerBase();
 
-  void setup(BLEServer* bleServer);
+  void setup(BLEServer* ble_server);
 
   void send_value(float value);
   void send_value(string value);
@@ -33,6 +33,7 @@ public:
 
 protected:
   virtual Nameable* get_component() { return component; }
+  virtual string get_component_description() { return get_component()->get_name(); }
   BLECharacteristic* get_characteristic() { return characteristic; }
 
   virtual bool can_receive_writes() { return false; }

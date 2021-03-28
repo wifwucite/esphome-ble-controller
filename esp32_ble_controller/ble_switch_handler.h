@@ -3,14 +3,12 @@
 #include "esphome/core/defines.h"
 #ifdef USE_SWITCH
 
-#include <BLEServer.h>
-#include <BLECharacteristic.h>
+#include <string>
 
 #include "esphome/components/switch/switch.h"
 
 #include "ble_component_handler.h"
 
-#include <string>
 using std::string;
 
 namespace esphome {

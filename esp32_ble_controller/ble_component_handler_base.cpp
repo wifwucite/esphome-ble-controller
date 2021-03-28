@@ -18,33 +18,28 @@ BLEComponentHandlerBase::BLEComponentHandlerBase(Nameable* component, const BLEC
 BLEComponentHandlerBase::~BLEComponentHandlerBase() 
 {}
 
-void BLEComponentHandlerBase::setup(BLEServer* bleServer) {
+void BLEComponentHandlerBase::setup(BLEServer* ble_server) {
   auto object_id = component->get_object_id();
 
   ESP_LOGCONFIG(TAG, "Setting up BLE characteristic for device %s", object_id.c_str());
 
   const string& service_UUID = characteristic_info.service_UUID;
   ESP_LOGCONFIG(TAG, "Setting up service %s", service_UUID.c_str());
-  BLEService* service = bleServer->getServiceByUUID(service_UUID);
+  BLEService* service = ble_server->getServiceByUUID(service_UUID);
   if (service == nullptr) {
-    service = bleServer->createService(service_UUID);
+    service = ble_server->createService(service_UUID);
   }
 
   const string& characteristic_UUID = characteristic_info.characteristic_UUID;
   ESP_LOGCONFIG(TAG, "Setting up char %s", characteristic_UUID.c_str());
 
   uint32_t properties = BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_NOTIFY;
+  //     | BLECharacteristic::PROPERTY_INDICATE
   if (this->can_receive_writes()) {
     properties |= BLECharacteristic::PROPERTY_WRITE;
   }
 
   characteristic = service->createCharacteristic(characteristic_UUID, properties);
-  // characteristic = service->createCharacteristic(characteristic_UUID,
-  //     BLECharacteristic::PROPERTY_READ //
-  //     | BLECharacteristic::PROPERTY_NOTIFY
-  //     | BLECharacteristic::PROPERTY_WRITE
-  //     //| BLECharacteristic::PROPERTY_INDICATE
-  // );
   if (this->can_receive_writes()) {
     characteristic->setCallbacks(this);
   }
@@ -58,7 +53,7 @@ void BLEComponentHandlerBase::setup(BLEServer* bleServer) {
   characteristic->setAccessPermissions(access_permissions);
 
   BLEDescriptor* descriptor_2901 = new BLEDescriptor(BLEUUID((uint16_t)0x2901));
-  descriptor_2901->setValue(component->get_name());
+  descriptor_2901->setValue(get_component_description());
   descriptor_2901->setAccessPermissions(access_permissions);
   characteristic->addDescriptor(descriptor_2901);
 

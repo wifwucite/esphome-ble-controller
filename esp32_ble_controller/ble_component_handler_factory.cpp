@@ -1,6 +1,7 @@
 #include "ble_component_handler_factory.h"
 
 #include "ble_component_handler.h"
+#include "ble_sensor_handler.h"
 #include "ble_switch_handler.h"
 
 namespace esphome {
@@ -29,7 +30,7 @@ BLEComponentHandlerBase* esphome::esp32_ble_controller::BLEComponentHandlerFacto
 
 #ifdef USE_SENSOR
 BLEComponentHandlerBase* esphome::esp32_ble_controller::BLEComponentHandlerFactory::create_sensor_handler(sensor::Sensor* component, const BLECharacteristicInfoForHandler& characteristic_info) {
-  return create_component_handler(component, characteristic_info);    
+  return new BLESensorHandler(component, characteristic_info);    
 }
 #endif
 
