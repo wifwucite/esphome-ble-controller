@@ -8,13 +8,13 @@ namespace esp32_ble_controller {
 
 static const char *TAG = "ble_component_handler_factory";
 
-BLEComponentHandlerBase* BLEComponentHandlerFactory::create_component_handler(Nameable* component, const BLECharacteristicInfoForHandler& characteristicInfo) {
-  return new BLEComponentHandler<Nameable>(component, characteristicInfo);
+BLEComponentHandlerBase* BLEComponentHandlerFactory::create_component_handler(Nameable* component, const BLECharacteristicInfoForHandler& characteristic_info) {
+  return new BLEComponentHandler<Nameable>(component, characteristic_info);
 }
 
 #ifdef USE_BINARY_SENSOR
-BLEComponentHandlerBase* esphome::esp32_ble_controller::BLEComponentHandlerFactory::create_binary_sensor_handler(binary_sensor::BinarySensor* component, const BLECharacteristicInfoForHandler& characteristicInfo) {
-  return create_component_handler(component, characteristicInfo);    
+BLEComponentHandlerBase* esphome::esp32_ble_controller::BLEComponentHandlerFactory::create_binary_sensor_handler(binary_sensor::BinarySensor* component, const BLECharacteristicInfoForHandler& characteristic_info) {
+  return create_component_handler(component, characteristic_info);    
 }
 #endif
 
@@ -28,20 +28,20 @@ BLEComponentHandlerBase* esphome::esp32_ble_controller::BLEComponentHandlerFacto
 #endif
 
 #ifdef USE_SENSOR
-BLEComponentHandlerBase* esphome::esp32_ble_controller::BLEComponentHandlerFactory::create_sensor_handler(sensor::Sensor* component, const BLECharacteristicInfoForHandler& characteristicInfo) {
-  return create_component_handler(component, characteristicInfo);    
+BLEComponentHandlerBase* esphome::esp32_ble_controller::BLEComponentHandlerFactory::create_sensor_handler(sensor::Sensor* component, const BLECharacteristicInfoForHandler& characteristic_info) {
+  return create_component_handler(component, characteristic_info);    
 }
 #endif
 
 #ifdef USE_SWITCH
-BLEComponentHandlerBase* BLEComponentHandlerFactory::create_switch_handler(switch_::Switch* component, const BLECharacteristicInfoForHandler& characteristicInfo) {
-  return new BLESwitchHandler(component, characteristicInfo);
+BLEComponentHandlerBase* BLEComponentHandlerFactory::create_switch_handler(switch_::Switch* component, const BLECharacteristicInfoForHandler& characteristic_info) {
+  return new BLESwitchHandler(component, characteristic_info);
 }
 #endif
 
 #ifdef USE_TEXT_SENSOR
-BLEComponentHandlerBase* esphome::esp32_ble_controller::BLEComponentHandlerFactory::create_text_sensor_handler(text_sensor::TextSensor* component, const BLECharacteristicInfoForHandler& characteristicInfo) {
-  return create_component_handler(component, characteristicInfo);    
+BLEComponentHandlerBase* esphome::esp32_ble_controller::BLEComponentHandlerFactory::create_text_sensor_handler(text_sensor::TextSensor* component, const BLECharacteristicInfoForHandler& characteristic_info) {
+  return create_component_handler(component, characteristic_info);    
 }
 #endif
 

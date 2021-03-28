@@ -11,8 +11,8 @@ namespace esp32_ble_controller {
 
 static const char *TAG = "ble_component_handler_base";
 
-BLEComponentHandlerBase::BLEComponentHandlerBase(Nameable* component, const BLECharacteristicInfoForHandler& characteristicInfo) 
-  : component(component), characteristicInfo(characteristicInfo)
+BLEComponentHandlerBase::BLEComponentHandlerBase(Nameable* component, const BLECharacteristicInfoForHandler& characteristic_info) 
+  : component(component), characteristic_info(characteristic_info)
 {}
 
 BLEComponentHandlerBase::~BLEComponentHandlerBase() 
@@ -23,23 +23,23 @@ void BLEComponentHandlerBase::setup(BLEServer* bleServer) {
 
   ESP_LOGCONFIG(TAG, "Setting up BLE characteristic for device %s", object_id.c_str());
 
-  const string& serviceUUID = characteristicInfo.serviceUUID;
-  ESP_LOGCONFIG(TAG, "Setting up service %s", serviceUUID.c_str());
-  BLEService* service = bleServer->getServiceByUUID(serviceUUID);
+  const string& service_UUID = characteristic_info.service_UUID;
+  ESP_LOGCONFIG(TAG, "Setting up service %s", service_UUID.c_str());
+  BLEService* service = bleServer->getServiceByUUID(service_UUID);
   if (service == nullptr) {
-    service = bleServer->createService(serviceUUID);
+    service = bleServer->createService(service_UUID);
   }
 
-  const string& characteristicUUID = characteristicInfo.characteristicUUID;
-  ESP_LOGCONFIG(TAG, "Setting up char %s", characteristicUUID.c_str());
+  const string& characteristic_UUID = characteristic_info.characteristic_UUID;
+  ESP_LOGCONFIG(TAG, "Setting up char %s", characteristic_UUID.c_str());
 
   uint32_t properties = BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_NOTIFY;
   if (this->can_receive_writes()) {
     properties |= BLECharacteristic::PROPERTY_WRITE;
   }
 
-  characteristic = service->createCharacteristic(characteristicUUID, properties);
-  // characteristic = service->createCharacteristic(characteristicUUID,
+  characteristic = service->createCharacteristic(characteristic_UUID, properties);
+  // characteristic = service->createCharacteristic(characteristic_UUID,
   //     BLECharacteristic::PROPERTY_READ //
   //     | BLECharacteristic::PROPERTY_NOTIFY
   //     | BLECharacteristic::PROPERTY_WRITE
@@ -62,7 +62,7 @@ void BLEComponentHandlerBase::setup(BLEServer* bleServer) {
   descriptor_2901->setAccessPermissions(access_permissions);
   characteristic->addDescriptor(descriptor_2901);
 
-  if (characteristicInfo.useBLE2902)
+  if (characteristic_info.use_BLE2902)
   {
     // With this descriptor clients can switch notifications on and off, but we want to send notifications anyway as long as we are connected. The homebridge plug-in cannot turn notifications on and off.
     // https://www.bluetooth.com/specifications/gatt/viewer?attributeXmlFile=org.bluetooth.descriptor.gatt.client_characteristic_configuration.xml
@@ -73,7 +73,7 @@ void BLEComponentHandlerBase::setup(BLEServer* bleServer) {
 
   service->start();
 
-  ESP_LOGCONFIG(TAG, "%s: SRV %s - CHAR %s", object_id.c_str(), serviceUUID.c_str(), characteristicUUID.c_str());
+  ESP_LOGCONFIG(TAG, "%s: SRV %s - CHAR %s", object_id.c_str(), service_UUID.c_str(), characteristic_UUID.c_str());
 }
 
 void BLEComponentHandlerBase::send_value(float value) {

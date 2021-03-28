@@ -6,6 +6,9 @@
 namespace esphome {
 namespace esp32_ble_controller {
 
+/**
+ * @brief Thread-safe bounded queue to pass values between Free RTOS tasks
+ */
 template <typename T>
 class ThreadSafeBoundedQueue {
 public:

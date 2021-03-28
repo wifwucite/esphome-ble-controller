@@ -1,9 +1,3 @@
-/*
-  Lines to be added to main:
-  esp32_ble_controller::esp32_ble_controller* ble_controller = new esp32_ble_controller::esp32_ble_controller();
-  App.register_component(ble_controller);
-*/
-
 #include <BLEDevice.h>
 #include <BLEServer.h>
 #include <BLESecurity.h>
@@ -14,6 +8,7 @@
 #include <esp_bt_main.h>
 
 #include "esp32_ble_controller.h"
+
 #include "ble_maintenance_handler.h"
 #include "ble_component_handler_factory.h"
 
@@ -51,13 +46,13 @@ void remove_all_bonded_devices()
     free(dev_list);
 }
 
-void ESP32BLEController::register_component(Nameable* component, const string& serviceUUID, const string& characteristicUUID, bool useBLE2902) {
+void ESP32BLEController::register_component(Nameable* component, const string& serviceUUID, const string& characteristic_UUID, bool use_BLE2902) {
   BLECharacteristicInfoForHandler info;
-  info.serviceUUID = serviceUUID;
-  info.characteristicUUID = characteristicUUID;
-  info.useBLE2902 = useBLE2902;
+  info.service_UUID = serviceUUID;
+  info.characteristic_UUID = characteristic_UUID;
+  info.use_BLE2902 = use_BLE2902;
 
-  infoForComponent[component->get_object_id()] = info;
+  info_for_component[component->get_object_id()] = info;
 }
 
 void ESP32BLEController::setup() {
@@ -130,8 +125,8 @@ bool ESP32BLEController::setup_ble() {
 void ESP32BLEController::setup_ble_services() {
   bleServer = BLEDevice::createServer();
 
-  maintenanceHandler = new BLEMaintenanceHandler();
-  maintenanceHandler->setup(bleServer);
+  maintenance_handler = new BLEMaintenanceHandler();
+  maintenance_handler->setup(bleServer);
 
   if (get_ble_mode() != BLEMaintenanceMode::WIFI_ONLY) {
     setup_ble_services_for_components();
@@ -164,7 +159,7 @@ void ESP32BLEController::setup_ble_services_for_components() {
   setup_ble_services_for_components(App.get_climates());
 #endif
 
-  for (auto const& entry : handlerForComponent) {
+  for (auto const& entry : handler_for_component) {
     entry.second->setup(bleServer);
   }
 }
@@ -181,21 +176,21 @@ void ESP32BLEController::setup_ble_service_for_component(C* component, BLECompon
   static_assert(std::is_base_of<Nameable, C>::value, "Nameable subclasses expected");
 
   auto object_id = component->get_object_id();
-  if (infoForComponent.count(object_id)) {
-    auto info = infoForComponent[object_id];
-    handlerForComponent[object_id] = handler_creator(component, info);
+  if (info_for_component.count(object_id)) {
+    auto info = info_for_component[object_id];
+    handler_for_component[object_id] = handler_creator(component, info);
   }
 }
 
 void ESP32BLEController::initialize_ble_mode() {
-  bleModePreference = global_preferences.make_preference<uint8_t>(fnv1_hash("BLEMaintenanceMode"));
+  ble_mode_preference = global_preferences.make_preference<uint8_t>(fnv1_hash("BLEMaintenanceMode"));
 
   uint8_t mode;
-  if (!bleModePreference.load(&mode)) {
+  if (!ble_mode_preference.load(&mode)) {
     mode = (uint8_t) BLEMaintenanceMode::BLE_ONLY;
   }
 
-  bleMode = static_cast<BLEMaintenanceMode>(mode);
+  ble_mode = static_cast<BLEMaintenanceMode>(mode);
   
   ESP_LOGCONFIG(TAG, "BLE mode: %d", mode);
 }
@@ -212,9 +207,9 @@ void ESP32BLEController::set_ble_mode(uint8_t newMode) {
 
   ESP_LOGI(TAG, "Updating BLE mode to %d", newMode);
   BLEMaintenanceMode newBleMode = static_cast<BLEMaintenanceMode>(newMode);
-  if (bleMode != newBleMode) {
-    bleMode = newBleMode;
-    bleModePreference.save(&bleMode);
+  if (ble_mode != newBleMode) {
+    ble_mode = newBleMode;
+    ble_mode_preference.save(&ble_mode);
 
     App.safe_reboot();
   }
@@ -226,7 +221,7 @@ void ESP32BLEController::set_security_enabled(bool enabled) {
 
 void ESP32BLEController::dump_config() {
   ESP_LOGCONFIG(TAG, "Bluetooth Low Energy Controller:");
-  ESP_LOGCONFIG(TAG, "  BLE mode: %d", (uint8_t) bleMode);
+  ESP_LOGCONFIG(TAG, "  BLE mode: %d", (uint8_t) ble_mode);
 
   if (get_security_enabled()) {
     ESP_LOGCONFIG(TAG, "  security enabled");
@@ -266,27 +261,27 @@ void ESP32BLEController::update_component_state(C* component, S state) {
   static_assert(std::is_base_of<Nameable, C>::value, "Nameable subclasses expected");
 
   auto object_id = component->get_object_id();
-  BLEComponentHandlerBase* handler = handlerForComponent[object_id];
+  BLEComponentHandlerBase* handler = handler_for_component[object_id];
   if (handler != nullptr) {
     handler->send_value(state);
   }
 }
 
-void ESP32BLEController::add_on_show_pass_key_callback(std::function<void(string)> &&f) {
-  on_show_pass_key_callbacks.add(std::move(f));
+void ESP32BLEController::add_on_show_pass_key_callback(std::function<void(string)>&& trigger_function) {
+  on_show_pass_key_callbacks.add(std::move(trigger_function));
 }
 
-void ESP32BLEController::add_on_authentication_complete_callback(std::function<void()> &&f) {
-  on_authentication_complete_callbacks.add(std::move(f));
+void ESP32BLEController::add_on_authentication_complete_callback(std::function<void(bool)>&& trigger_function) {
+  on_authentication_complete_callbacks.add(std::move(trigger_function));
 }
 
-void ESP32BLEController::execute_in_loop(std::function<void()> &&f) {
-  deferedFunctionsForLoop.push(std::move(f));
+void ESP32BLEController::execute_in_loop(std::function<void()>&& deferred_function) {
+  deferred_functions_for_loop.push(std::move(deferred_function));
 }
 
 void ESP32BLEController::loop() {
   std::function<void()> deferred_function;
-  while (deferedFunctionsForLoop.take(deferred_function)) {
+  while (deferred_functions_for_loop.take(deferred_function)) {
     deferred_function();
   }
 }
@@ -326,16 +321,21 @@ void ESP32BLEController::onPassKeyNotify(uint32_t pass_key) {
 
   auto& callbacks = on_show_pass_key_callbacks;
   global_ble_controller->execute_in_loop([&callbacks, pass_key_str](){ 
-    ESP_LOGI(TAG, "BLE authentication - pass key: %s", pass_key_str.c_str());
+    ESP_LOGI(TAG, "BLE authentication - pass received");
     callbacks.call(pass_key_str);
   });
 }
 
-void ESP32BLEController::onAuthenticationComplete(esp_ble_auth_cmpl_t) {
+void ESP32BLEController::onAuthenticationComplete(esp_ble_auth_cmpl_t result) {
   auto& callbacks = on_authentication_complete_callbacks;
-  global_ble_controller->execute_in_loop([&callbacks](){ 
-    ESP_LOGD(TAG, "BLE authentication - completed");
-    callbacks.call();
+  boolean success=result.success;
+  global_ble_controller->execute_in_loop([&callbacks, success](){
+    if (success) {
+      ESP_LOGD(TAG, "BLE authentication - completed succesfully");
+    } else {
+      ESP_LOGD(TAG, "BLE authentication - failed");
+    }
+    callbacks.call(success);
   });
 }
 

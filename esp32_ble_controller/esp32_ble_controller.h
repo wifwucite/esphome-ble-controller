@@ -5,16 +5,14 @@
 #include <vector>
 
 #include <BLEServer.h>
-#include <BLESecurity.h>
 
 #include "esphome/core/component.h"
 #include "esphome/core/controller.h"
 #include "esphome/core/defines.h"
 #include "esphome/core/preferences.h"
 
-#include "thread_safe_bounded_queue.h"
-
 #include "ble_component_handler_base.h"
+#include "thread_safe_bounded_queue.h"
 
 using std::string;
 using std::unordered_map;
@@ -29,11 +27,12 @@ enum class BLEMaintenanceMode : uint8_t { BLE_ONLY, MIXED, WIFI_ONLY };
 
 /**
  * Bluetooth Low Energy controller for ESP32.
+ * It provides a BLE server that can clients like mobile phones can connect to and access components (like reading sensor values and control switches).
  * @brief BLE controller for ESP32
  */
 class ESP32BLEController : public Component, public Controller, private BLESecurityCallbacks {
 public:
-  void register_component(Nameable* component, const string& serviceUUID, const string& characteristicUUID, bool useBLE2902 = true);
+  void register_component(Nameable* component, const string& service_UUID, const string& characteristic_UUID, bool use_BLE2902 = true);
 
   float get_setup_priority() const override { return setup_priority::PROCESSOR; }
 
@@ -43,7 +42,7 @@ public:
 
   void loop() override;
 
-  inline BLEMaintenanceMode get_ble_mode() const { return bleMode; }
+  inline BLEMaintenanceMode get_ble_mode() const { return ble_mode; }
   void set_ble_mode(BLEMaintenanceMode mode);
   void set_ble_mode(uint8_t mode);
 
@@ -76,11 +75,11 @@ public:
   void on_climate_update(climate::Climate *obj) override;
 #endif
 
-  void add_on_show_pass_key_callback(std::function<void(string)> &&f);
-  void add_on_authentication_complete_callback(std::function<void()> &&f);
+  void add_on_show_pass_key_callback(std::function<void(string)>&& trigger_function);
+  void add_on_authentication_complete_callback(std::function<void(boolean)>&& trigger_function);
 
   /// Executes a given function in the main loop of the app.
-  void execute_in_loop(std::function<void()> &&f);
+  void execute_in_loop(std::function<void()>&& deferred_function);
 
 private:
   void initialize_ble_mode();
@@ -102,20 +101,20 @@ private:
 private:
   BLEServer* bleServer;
 
-  BLEMaintenanceMode bleMode;
-  ESPPreferenceObject bleModePreference;
+  BLEMaintenanceMode ble_mode;
+  ESPPreferenceObject ble_mode_preference;
 
   bool security_enabled{true};
 
-  BLEMaintenanceHandler* maintenanceHandler;
+  BLEMaintenanceHandler* maintenance_handler;
 
-  unordered_map<string, BLECharacteristicInfoForHandler> infoForComponent;
-  unordered_map<string, BLEComponentHandlerBase*> handlerForComponent;
+  unordered_map<string, BLECharacteristicInfoForHandler> info_for_component;
+  unordered_map<string, BLEComponentHandlerBase*> handler_for_component;
 
-  ThreadSafeBoundedQueue<std::function<void()>> deferedFunctionsForLoop{16};
+  ThreadSafeBoundedQueue<std::function<void()>> deferred_functions_for_loop{16};
 
   CallbackManager<void(string)> on_show_pass_key_callbacks;
-  CallbackManager<void()> on_authentication_complete_callbacks;
+  CallbackManager<void(boolean)> on_authentication_complete_callbacks;
 };
 
 /**

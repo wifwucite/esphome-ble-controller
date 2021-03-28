@@ -15,14 +15,14 @@ namespace esphome {
 namespace esp32_ble_controller {
 
 struct BLECharacteristicInfoForHandler {
-  string serviceUUID;
-  string characteristicUUID;
-  boolean useBLE2902;
+  string service_UUID;
+  string characteristic_UUID;
+  boolean use_BLE2902;
 };
 
 class BLEComponentHandlerBase : private BLECharacteristicCallbacks {
 public:
-  BLEComponentHandlerBase(Nameable* component, const BLECharacteristicInfoForHandler& characteristicInfo);
+  BLEComponentHandlerBase(Nameable* component, const BLECharacteristicInfoForHandler& characteristic_info);
   virtual ~BLEComponentHandlerBase();
 
   void setup(BLEServer* bleServer);
@@ -44,7 +44,7 @@ private:
   virtual void onWrite(BLECharacteristic *characteristic); // inherited from BLECharacteristicCallbacks
 
   Nameable* component;
-  BLECharacteristicInfoForHandler characteristicInfo;
+  BLECharacteristicInfoForHandler characteristic_info;
 
   BLECharacteristic* characteristic;
 };

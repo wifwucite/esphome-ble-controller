@@ -54,6 +54,7 @@ SECURTY_MODE_OPTIONS = {
 # authetication automations
 CONF_ON_SHOW_PASS_KEY = "on_show_pass_key"
 BLEControllerShowPassKeyTrigger = esp32_ble_controller_ns.class_('BLEControllerShowPassKeyTrigger', automation.Trigger.template())
+
 CONF_ON_AUTHENTICATION_COMPLETE = "on_authentication_complete"
 BLEControllerAuthenticationCompleteTrigger = esp32_ble_controller_ns.class_('BLEControllerAuthenticationCompleteTrigger', automation.Trigger.template())
 
@@ -112,4 +113,4 @@ def to_code(config):
 
     for conf in config.get(CONF_ON_AUTHENTICATION_COMPLETE, []):
         trigger = cg.new_Pvariable(conf[CONF_TRIGGER_ID], var)
-        yield automation.build_automation(trigger, [], conf)
+        yield automation.build_automation(trigger, [(cg.bool_, 'success')], conf)

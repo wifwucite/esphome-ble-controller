@@ -64,9 +64,11 @@ esp32_ble_controller:
   - logger.log:
       format: "pass key is %s"
       args: 'pass_key.c_str()'
-  # automation that is invoked when the authentication is complete (either with success or failure)
+  # automation that is invoked when the authentication is complete, the boolean "success" indicates success or failure
   on_authentication_complete:
-  - logger.log: "auth complete"
+  - logger.log:
+      format: "BLE authentication complete %d" # shows 1 on success, 0 on failure
+      args: 'success'
 ```
 
 ## Features

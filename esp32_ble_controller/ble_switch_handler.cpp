@@ -7,7 +7,7 @@ namespace esp32_ble_controller {
 
 static const char *TAG = "ble_switch_handler";
 
-// BLESwitchHandler::BLESwitchHandler(Switch* component, const BLECharacteristicInfoForHandler& characteristicInfo)  : BLEComponentHandler(component, characteristicInfo) 
+// BLESwitchHandler::BLESwitchHandler(Switch* component, const BLECharacteristicInfoForHandler& characteristic_info)  : BLEComponentHandler(component, characteristic_info) 
 // {
 //   set_value(component->state); // do not send yet!
 // }

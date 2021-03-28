@@ -13,7 +13,7 @@ namespace esp32_ble_controller {
 template <typename C>
 class BLEComponentHandler : public BLEComponentHandlerBase {
 public:
-  BLEComponentHandler(C* component, const BLECharacteristicInfoForHandler& characteristicInfo) : BLEComponentHandlerBase(component, characteristicInfo) {}
+  BLEComponentHandler(C* component, const BLECharacteristicInfoForHandler& characteristic_info) : BLEComponentHandlerBase(component, characteristic_info) {}
   virtual ~BLEComponentHandler() {}
 
 protected:

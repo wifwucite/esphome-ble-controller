@@ -20,7 +20,7 @@ class BLEMaintenanceHandler : private BLECharacteristicCallbacks {
 public:
   virtual ~BLEMaintenanceHandler() {}
 
-  void setup(BLEServer* bleServer);
+  void setup(BLEServer* ble_server);
 
   void set_ble_mode(BLEMaintenanceMode mode);
 
@@ -40,15 +40,15 @@ private:
   bool is_security_enabled();
   
 private:
-  BLEService* maintenanceService;
+  BLEService* maintenance_service;
 
-  BLECharacteristic* bleModeCharacteristic;
+  BLECharacteristic* ble_mode_characteristic;
 
 #ifdef USE_LOGGER
   int log_level;
 
-  BLECharacteristic* loggingCharacteristic;
-  BLECharacteristic* logLevelCharacteristic;
+  BLECharacteristic* logging_characteristic;
+  BLECharacteristic* log_level_characteristic;
 #endif
 
 };

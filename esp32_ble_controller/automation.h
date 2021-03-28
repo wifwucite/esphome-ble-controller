@@ -16,11 +16,11 @@ public:
   }
 };
 
-class BLEControllerAuthenticationCompleteTrigger : public Trigger<> {
+class BLEControllerAuthenticationCompleteTrigger : public Trigger<boolean> {
 public:
   BLEControllerAuthenticationCompleteTrigger(ESP32BLEController* controller) {
-    controller->add_on_authentication_complete_callback([this]() {
-      this->trigger();
+    controller->add_on_authentication_complete_callback([this](boolean success) {
+      this->trigger(success);
     });
   }
 };

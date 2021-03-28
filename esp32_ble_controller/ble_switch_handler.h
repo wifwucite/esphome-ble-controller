@@ -20,7 +20,7 @@ using switch_::Switch;
 
 class BLESwitchHandler : public BLEComponentHandler<Switch> {
 public:
-  BLESwitchHandler(Switch* component, const BLECharacteristicInfoForHandler& characteristicInfo) : BLEComponentHandler(component, characteristicInfo) {}
+  BLESwitchHandler(Switch* component, const BLECharacteristicInfoForHandler& characteristic_info) : BLEComponentHandler(component, characteristic_info) {}
   virtual ~BLESwitchHandler() {}
 
 protected:

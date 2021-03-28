@@ -32,10 +32,10 @@ namespace esp32_ble_controller {
 
 class BLEComponentHandlerFactory {
 public:
-  static BLEComponentHandlerBase* create_component_handler(Nameable* component, const BLECharacteristicInfoForHandler& characteristicInfo);
+  static BLEComponentHandlerBase* create_component_handler(Nameable* component, const BLECharacteristicInfoForHandler& characteristic_info);
 
 #ifdef USE_BINARY_SENSOR
-  static BLEComponentHandlerBase* create_binary_sensor_handler(binary_sensor::BinarySensor* component, const BLECharacteristicInfoForHandler& characteristicInfo);
+  static BLEComponentHandlerBase* create_binary_sensor_handler(binary_sensor::BinarySensor* component, const BLECharacteristicInfoForHandler& characteristic_info);
 #endif
 
 #ifdef USE_COVER
@@ -48,15 +48,15 @@ public:
 #endif
 
 #ifdef USE_SENSOR
-  static BLEComponentHandlerBase* create_sensor_handler(sensor::Sensor* component, const BLECharacteristicInfoForHandler& characteristicInfo);
+  static BLEComponentHandlerBase* create_sensor_handler(sensor::Sensor* component, const BLECharacteristicInfoForHandler& characteristic_info);
 #endif
 
 #ifdef USE_SWITCH
-  static BLEComponentHandlerBase* create_switch_handler(switch_::Switch* component, const BLECharacteristicInfoForHandler& characteristicInfo);
+  static BLEComponentHandlerBase* create_switch_handler(switch_::Switch* component, const BLECharacteristicInfoForHandler& characteristic_info);
 #endif
 
 #ifdef USE_TEXT_SENSOR
-  static BLEComponentHandlerBase* create_text_sensor_handler(text_sensor::TextSensor* component, const BLECharacteristicInfoForHandler& characteristicInfo);
+  static BLEComponentHandlerBase* create_text_sensor_handler(text_sensor::TextSensor* component, const BLECharacteristicInfoForHandler& characteristic_info);
 #endif
 
 #ifdef USE_CLIMATE
