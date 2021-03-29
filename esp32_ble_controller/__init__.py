@@ -33,7 +33,7 @@ def validate_UUID(value):
 
 BLE_CHARACTERISTIC = cv.Schema({
     cv.Required("characteristic"): validate_UUID,
-    cv.GenerateID(CONF_EXPOSES_COMPONENT): cv.use_id(cg.Nameable), # TASk validate that only supported Nameables are referenced
+    cv.GenerateID(CONF_EXPOSES_COMPONENT): cv.use_id(cg.Nameable), # TASK validate that only supported Nameables are referenced
     cv.Optional(CONF_BLE_USE_2902, default=True): cv.boolean,
 })
 
@@ -48,7 +48,6 @@ CONF_SECURITY_MODE = 'security_mode'
 SECURTY_MODE_OPTIONS = {
     'none': False,
     'show_pass_key': True,
-    'show_pin': True,
 }
 
 # authetication automations
@@ -105,12 +104,20 @@ def to_code(config):
         for service in config[CONF_BLE_SERVICES]:
             yield to_code_service(var, service)
 
+    security_enabled = SECURTY_MODE_OPTIONS[config[CONF_SECURITY_MODE]]
+    print(security_enabled)
     cg.add(var.set_security_enabled(config[CONF_SECURITY_MODE]))
 
     for conf in config.get(CONF_ON_SHOW_PASS_KEY, []):
-        trigger = cg.new_Pvariable(conf[CONF_TRIGGER_ID], var)
-        yield automation.build_automation(trigger, [(cg.std_string, 'pass_key')], conf)
+        if security_enabled:
+            trigger = cg.new_Pvariable(conf[CONF_TRIGGER_ID], var)
+            yield automation.build_automation(trigger, [(cg.std_string, 'pass_key')], conf)
+        else: # TASK ideally we would validate during code validation already
+            raise cv.Invalid(CONF_ON_SHOW_PASS_KEY + " automation only available if security is enabled")
 
     for conf in config.get(CONF_ON_AUTHENTICATION_COMPLETE, []):
-        trigger = cg.new_Pvariable(conf[CONF_TRIGGER_ID], var)
-        yield automation.build_automation(trigger, [(cg.bool_, 'success')], conf)
+        if security_enabled:
+            trigger = cg.new_Pvariable(conf[CONF_TRIGGER_ID], var)
+            yield automation.build_automation(trigger, [(cg.bool_, 'success')], conf)
+        else: # TASK ideally we would validate during code validation already
+            raise cv.Invalid(CONF_ON_AUTHENTICATION_COMPLETE + " automation only available if security is enabled")
