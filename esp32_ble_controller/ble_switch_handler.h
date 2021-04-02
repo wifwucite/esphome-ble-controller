@@ -16,6 +16,9 @@ namespace esp32_ble_controller {
 
 using switch_::Switch;
 
+/**
+ * Special component handler for swtiches, which allows turning the switch on and off from a BLE client.
+ */
 class BLESwitchHandler : public BLEComponentHandler<Switch> {
 public:
   BLESwitchHandler(Switch* component, const BLECharacteristicInfoForHandler& characteristic_info) : BLEComponentHandler(component, characteristic_info) {}

@@ -30,6 +30,10 @@ using std::string;
 namespace esphome {
 namespace esp32_ble_controller {
 
+/**
+ * Factory to create a specific BLEComponentHandlerBase instance for a component (sensor, switch, ...) and a given characteristic info structure.
+ * Typically the factory will create a hanlder derived from BLEComponentHandlerBase that is specific to the component, like BLESwitchHandler for switches, which allows turning the switch on and off.
+ */
 class BLEComponentHandlerFactory {
 public:
   static BLEComponentHandlerBase* create_component_handler(Nameable* component, const BLECharacteristicInfoForHandler& characteristic_info);

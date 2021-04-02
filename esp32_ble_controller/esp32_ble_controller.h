@@ -27,7 +27,10 @@ enum class BLEMaintenanceMode : uint8_t { BLE_ONLY, MIXED, WIFI_ONLY };
 
 /**
  * Bluetooth Low Energy controller for ESP32.
- * It provides a BLE server that can clients like mobile phones can connect to and access components (like reading sensor values and control switches).
+ * It provides a BLE server that can BLE clients like mobile phones can connect to and access components (like reading sensor values and control switches).
+ * In addition it provides maintenance feature like a BLE mode and logging over BLE.
+ * <para>
+ * Besides the generic maintenance, this controller only exposes components over BLE that have been registered before (i.e. configured explicitly in the yaml configuration).
  * @brief BLE controller for ESP32
  */
 class ESP32BLEController : public Component, public Controller, private BLESecurityCallbacks {
@@ -78,7 +81,7 @@ public:
   void add_on_show_pass_key_callback(std::function<void(string)>&& trigger_function);
   void add_on_authentication_complete_callback(std::function<void(boolean)>&& trigger_function);
 
-  /// Executes a given function in the main loop of the app.
+  /// Executes a given function in the main loop of the app. (Can be called from another RTOS task.)
   void execute_in_loop(std::function<void()>&& deferred_function);
 
 private:
@@ -117,9 +120,7 @@ private:
   CallbackManager<void(boolean)> on_authentication_complete_callbacks;
 };
 
-/**
- * The BLE controller singleton.
- */
+/// The BLE controller singleton.
 extern ESP32BLEController* global_ble_controller;
 
 } // namespace esp32_ble_controller

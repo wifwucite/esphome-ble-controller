@@ -12,9 +12,10 @@ namespace esphome {
 namespace esp32_ble_controller {
 
 /**
- * Provides standard BLE functionality that does not depend on particular component configuration. This includes logging over BLE and controlling BLE mode.
- * This handler exposes a BLE maintenance service with characteristics for the mode and for logging.
- * @brief BLE mode characteristic and logging over BLE
+ * Provides standard maintenance support for the BLE controller like logging over BLE and controlling BLE mode.
+ * It does not control individual ESPHome components (like sensors, switches, ...), but rather provides generic global functionality.
+ * It provides a special BLE service with its own characteristics.
+ * @brief Provides maintenance support for BLE clients (like controlling the BLE mode and logging over BLE)
  */
 class BLEMaintenanceHandler : private BLECharacteristicCallbacks {
 public:

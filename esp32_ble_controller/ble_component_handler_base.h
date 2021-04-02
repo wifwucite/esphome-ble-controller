@@ -20,6 +20,14 @@ struct BLECharacteristicInfoForHandler {
   boolean use_BLE2902;
 };
 
+/**
+ * A component handler controls a single component (sensor, switch, ...). 
+ * Each component corresponds one-to-one to a BLE characteristic. When the state of the component changes in ESPHome, this handler updates the characteristic 
+ * so that a BLE client gets notified about the change and can read the new value.
+ * Some components like switch can be manipulated by the BLE client, i.e. the client writes a new value to the characteristic, which this handler observes and 
+ * performs the required changes like turning on the switch.
+ * @brief Controls a single component (sensor, switch, ...), propagates state changes to the BLE client and executes change request from the client.
+ */
 class BLEComponentHandlerBase : private BLECharacteristicCallbacks {
 public:
   BLEComponentHandlerBase(Nameable* component, const BLECharacteristicInfoForHandler& characteristic_info);

@@ -21,18 +21,17 @@ BLEComponentHandlerBase::~BLEComponentHandlerBase()
 void BLEComponentHandlerBase::setup(BLEServer* ble_server) {
   auto object_id = component->get_object_id();
 
-  ESP_LOGCONFIG(TAG, "Setting up BLE characteristic for device %s", object_id.c_str());
+  ESP_LOGCONFIG(TAG, "Setting up BLE characteristic for component %s", object_id.c_str());
 
+  // Get or create the BLE service.
   const string& service_UUID = characteristic_info.service_UUID;
-  ESP_LOGCONFIG(TAG, "Setting up service %s", service_UUID.c_str());
   BLEService* service = ble_server->getServiceByUUID(service_UUID);
   if (service == nullptr) {
     service = ble_server->createService(service_UUID);
   }
 
+  // Create the BLE characteristic.
   const string& characteristic_UUID = characteristic_info.characteristic_UUID;
-  ESP_LOGCONFIG(TAG, "Setting up char %s", characteristic_UUID.c_str());
-
   uint32_t properties = BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_NOTIFY;
   //     | BLECharacteristic::PROPERTY_INDICATE
   if (this->can_receive_writes()) {
@@ -44,6 +43,7 @@ void BLEComponentHandlerBase::setup(BLEServer* ble_server) {
     characteristic->setCallbacks(this);
   }
 
+  // Set access permissions
   esp_gatt_perm_t access_permissions;
   if (is_security_enabled()) {
     access_permissions = ESP_GATT_PERM_READ_ENC_MITM | ESP_GATT_PERM_WRITE_ENC_MITM; // signing (ESP_GATT_PERM_WRITE_SIGNED_MITM) did not work with iPhone
@@ -52,11 +52,13 @@ void BLEComponentHandlerBase::setup(BLEServer* ble_server) {
   }
   characteristic->setAccessPermissions(access_permissions);
 
+  // Add a 2901 descriptor to the characteristic, which sets a user-friendly description.
   BLEDescriptor* descriptor_2901 = new BLEDescriptor(BLEUUID((uint16_t)0x2901));
   descriptor_2901->setValue(get_component_description());
   descriptor_2901->setAccessPermissions(access_permissions);
   characteristic->addDescriptor(descriptor_2901);
 
+  // If requested, add a 2902 descriptor to the characteristic, which lets the client control if it wants to receive new values (and notifications) for this characteristic.
   if (characteristic_info.use_BLE2902)
   {
     // With this descriptor clients can switch notifications on and off, but we want to send notifications anyway as long as we are connected. The homebridge plug-in cannot turn notifications on and off.
@@ -89,7 +91,7 @@ void BLEComponentHandlerBase::send_value(string value) {
 
 void BLEComponentHandlerBase::send_value(bool raw_value) {
   auto object_id = component->get_object_id();
-  ESP_LOGD(TAG, "Updating component %s to %d", object_id.c_str(), raw_value);
+  ESP_LOGD(TAG, "Update component %s to %d", object_id.c_str(), raw_value);
 
   uint16_t value = raw_value;
   characteristic->setValue(value);

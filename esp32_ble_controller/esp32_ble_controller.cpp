@@ -276,7 +276,10 @@ void ESP32BLEController::add_on_authentication_complete_callback(std::function<v
 }
 
 void ESP32BLEController::execute_in_loop(std::function<void()>&& deferred_function) {
-  deferred_functions_for_loop.push(std::move(deferred_function));
+  boolean ok = deferred_functions_for_loop.push(std::move(deferred_function));
+  if (!ok) {
+    ESP_LOGW(TAG, "Deferred functions queue full");
+  }
 }
 
 void ESP32BLEController::loop() {

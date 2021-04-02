@@ -7,6 +7,7 @@
 namespace esphome {
 namespace esp32_ble_controller {
 
+/// Trigger for showing the pass key during authentication with a client.
 class BLEControllerShowPassKeyTrigger : public Trigger<std::string> {
 public:
   BLEControllerShowPassKeyTrigger(ESP32BLEController* controller) {
@@ -16,6 +17,7 @@ public:
   }
 };
 
+/// Trigger that is fired when authentication with a client is completed (either with success or failure).
 class BLEControllerAuthenticationCompleteTrigger : public Trigger<boolean> {
 public:
   BLEControllerAuthenticationCompleteTrigger(ESP32BLEController* controller) {
