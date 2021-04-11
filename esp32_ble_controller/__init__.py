@@ -105,7 +105,6 @@ def to_code(config):
             yield to_code_service(var, service)
 
     security_enabled = SECURTY_MODE_OPTIONS[config[CONF_SECURITY_MODE]]
-    print(security_enabled)
     cg.add(var.set_security_enabled(config[CONF_SECURITY_MODE]))
 
     for conf in config.get(CONF_ON_SHOW_PASS_KEY, []):
