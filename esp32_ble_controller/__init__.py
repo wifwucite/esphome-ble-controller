@@ -10,6 +10,30 @@ CODEOWNERS = ['@wifwucite']
 
 ### Shared stuff ########################################################################################################
 
+# Improvement of cv.typed_schema, which allows specifying a default option
+CONF_TYPE = "key"
+def cv_typed_schema(schemas, **kwargs):
+    """Create a schema that has a key to distinguish between schemas"""
+    key = kwargs.pop('key', CONF_TYPE)
+    default_schema_option = kwargs.pop('default', None)
+    key_validator = cv.one_of(*schemas, **kwargs)
+
+    def validator(value):
+        if not isinstance(value, dict):
+            raise cv.Invalid("Value must be dict")
+        schema_option = value.pop(key, default_schema_option)
+        if schema_option is None:
+            raise cv.Invalid(key + " not specified!")
+        value = value.copy()
+        key_v = key_validator(schema_option)
+        value = schemas[key_v](value)
+        value[key] = key_v
+        return value
+
+    return validator
+
+### Shared stuff ########################################################################################################
+
 esp32_ble_controller_ns = cg.esphome_ns.namespace('esp32_ble_controller')
 ESP32BLEController = esp32_ble_controller_ns.class_('ESP32BLEController', cg.Component, cg.Controller)
 
@@ -44,11 +68,13 @@ BLE_SERVICE = cv.Schema({
 
 # security mode enumeration
 CONF_SECURITY_MODE = 'security_mode'
-#SecurityModeEnum = esp32_ble_controller_ns.enum('SecurityMode')
+CONF_SECURITY_MODE_NONE = 'none'
+CONF_SECURITY_MODE_SHOW_PASS_KEY = 'show_pass_key'
 SECURTY_MODE_OPTIONS = {
-    'none': False,
-    'show_pass_key': True,
+    CONF_SECURITY_MODE_NONE: False,
+    CONF_SECURITY_MODE_SHOW_PASS_KEY: True,
 }
+#SecurityModeEnum = esp32_ble_controller_ns.enum('SecurityMode')
 
 # authetication automations
 CONF_ON_SHOW_PASS_KEY = "on_show_pass_key"
@@ -57,23 +83,25 @@ BLEControllerShowPassKeyTrigger = esp32_ble_controller_ns.class_('BLEControllerS
 CONF_ON_AUTHENTICATION_COMPLETE = "on_authentication_complete"
 BLEControllerAuthenticationCompleteTrigger = esp32_ble_controller_ns.class_('BLEControllerAuthenticationCompleteTrigger', automation.Trigger.template())
 
-# Schema for the controller (incl. validation)
-CONFIG_SCHEMA = cv.All(cv.Schema({
+BASIC_SCHEMA = cv.Schema({
     cv.GenerateID(): cv.declare_id(ESP32BLEController),
 
     cv.Optional(CONF_BLE_SERVICES): cv.ensure_list(BLE_SERVICE),
+})
 
-    cv.Optional(CONF_SECURITY_MODE, default='show_pass_key'): cv.enum(SECURTY_MODE_OPTIONS),
+# Schema for the controller (incl. validation)
+CONFIG_SCHEMA = cv.All(cv_typed_schema({
+    CONF_SECURITY_MODE_NONE: BASIC_SCHEMA,
 
-    # TASK validate that the chosen security mode supports authentication
-    cv.Optional(CONF_ON_SHOW_PASS_KEY): automation.validate_automation({
-        cv.GenerateID(CONF_TRIGGER_ID): cv.declare_id(BLEControllerShowPassKeyTrigger),
+    CONF_SECURITY_MODE_SHOW_PASS_KEY: BASIC_SCHEMA.extend({
+        cv.Optional(CONF_ON_SHOW_PASS_KEY): automation.validate_automation({
+            cv.GenerateID(CONF_TRIGGER_ID): cv.declare_id(BLEControllerShowPassKeyTrigger),
+        }),
+        cv.Optional(CONF_ON_AUTHENTICATION_COMPLETE): automation.validate_automation({
+            cv.GenerateID(CONF_TRIGGER_ID): cv.declare_id(BLEControllerAuthenticationCompleteTrigger),
+        }),
     }),
-    cv.Optional(CONF_ON_AUTHENTICATION_COMPLETE): automation.validate_automation({
-        cv.GenerateID(CONF_TRIGGER_ID): cv.declare_id(BLEControllerAuthenticationCompleteTrigger),
-    }),
-
-    }), cv.only_on_esp32)
+ }, key = CONF_SECURITY_MODE, default = CONF_SECURITY_MODE_SHOW_PASS_KEY), cv.only_on_esp32)
 
 ### Code generation ############################################################################################
 
@@ -105,18 +133,12 @@ def to_code(config):
             yield to_code_service(var, service)
 
     security_enabled = SECURTY_MODE_OPTIONS[config[CONF_SECURITY_MODE]]
-    cg.add(var.set_security_enabled(config[CONF_SECURITY_MODE]))
+    cg.add(var.set_security_enabled(security_enabled))
 
     for conf in config.get(CONF_ON_SHOW_PASS_KEY, []):
-        if security_enabled:
-            trigger = cg.new_Pvariable(conf[CONF_TRIGGER_ID], var)
-            yield automation.build_automation(trigger, [(cg.std_string, 'pass_key')], conf)
-        else: # TASK ideally we would validate during code validation already
-            raise cv.Invalid(CONF_ON_SHOW_PASS_KEY + " automation only available if security is enabled")
+        trigger = cg.new_Pvariable(conf[CONF_TRIGGER_ID], var)
+        yield automation.build_automation(trigger, [(cg.std_string, 'pass_key')], conf)
 
     for conf in config.get(CONF_ON_AUTHENTICATION_COMPLETE, []):
-        if security_enabled:
-            trigger = cg.new_Pvariable(conf[CONF_TRIGGER_ID], var)
-            yield automation.build_automation(trigger, [(cg.bool_, 'success')], conf)
-        else: # TASK ideally we would validate during code validation already
-            raise cv.Invalid(CONF_ON_AUTHENTICATION_COMPLETE + " automation only available if security is enabled")
+        trigger = cg.new_Pvariable(conf[CONF_TRIGGER_ID], var)
+        yield automation.build_automation(trigger, [(cg.bool_, 'success')], conf)
