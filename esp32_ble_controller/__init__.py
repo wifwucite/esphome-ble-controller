@@ -59,18 +59,12 @@ CONF_ON_AUTHENTICATION_COMPLETE = "on_authentication_complete"
 BLEControllerAuthenticationCompleteTrigger = esp32_ble_controller_ns.class_('BLEControllerAuthenticationCompleteTrigger', automation.Trigger.template())
 
 def require_config_setting_for_automation(automation_id, setting_key, required_setting_value, component_config):
-<<<<<<< HEAD
     """Validates that a given automation is only present if a given setting has a given value."""
-=======
->>>>>>> 31418efddfc84403878b9c02010cc02b0659afd9
     if automation_id in component_config and component_config[setting_key] != required_setting_value:
         raise cv.Invalid("Automation '" + automation_id + "' only available if " + setting_key + " = " + required_setting_value)
 
 def automations_available(component_config):
-<<<<<<< HEAD
     """Validates that the pass key related automations are only present if the security mode is set to show a pass key."""
-=======
->>>>>>> 31418efddfc84403878b9c02010cc02b0659afd9
     require_config_setting_for_automation(CONF_ON_SHOW_PASS_KEY, CONF_SECURITY_MODE, CONF_SECURITY_MODE_SHOW_PASS_KEY, component_config)
     require_config_setting_for_automation(CONF_ON_AUTHENTICATION_COMPLETE, CONF_SECURITY_MODE, CONF_SECURITY_MODE_SHOW_PASS_KEY, component_config)
     return component_config
