@@ -10,6 +10,9 @@
 #include "esp32_ble_controller.h"
 
 #include "ble_maintenance_handler.h"
+#include "ble_utils.h"
+#include "ble_command.h"
+#include "automation.h"
 #include "ble_component_handler_factory.h"
 
 namespace esphome {
@@ -17,33 +20,14 @@ namespace esp32_ble_controller {
 
 static const char *TAG = "esp32_ble_controller";
 
-void show_bonded_devices()
-{
-    int dev_num = esp_ble_get_bond_device_num();
+ESP32BLEController::ESP32BLEController() : maintenance_handler(new BLEMaintenanceHandler()) {}
 
-    esp_ble_bond_dev_t *dev_list = (esp_ble_bond_dev_t*) malloc(sizeof(esp_ble_bond_dev_t) * dev_num);
-    esp_ble_get_bond_device_list(&dev_num, dev_list);
-
-    ESP_LOGI(TAG, "Bonded BLE devices (%d):", dev_num);
-    for (int i = 0; i < dev_num; i++) {
-      esp_bd_addr_t& bd_address = dev_list[i].bd_addr;
-      ESP_LOGI(TAG, "%d) BD address %X:%X:%X:%X:%X:%X", i+1, bd_address[0], bd_address[1], bd_address[2], bd_address[3], bd_address[4], bd_address[5]);
-    }
-
-    free(dev_list);
+void ESP32BLEController::ESP32BLEController::register_command(const string& name, const string& description, BLEControllerCommandExecutionTrigger* trigger) {
+  maintenance_handler->add_command(new BLECommandCustom(name, description, trigger));
 }
 
-void remove_all_bonded_devices()
-{
-    int dev_num = esp_ble_get_bond_device_num();
-
-    esp_ble_bond_dev_t *dev_list = (esp_ble_bond_dev_t*) malloc(sizeof(esp_ble_bond_dev_t) * dev_num);
-    esp_ble_get_bond_device_list(&dev_num, dev_list);
-    for (int i = 0; i < dev_num; i++) {
-        esp_ble_remove_bond_device(dev_list[i].bd_addr);
-    }
-
-    free(dev_list);
+const vector<BLECommand*>& ESP32BLEController::get_commands() const {
+  return maintenance_handler->get_commands();
 }
 
 void ESP32BLEController::register_component(Nameable* component, const string& serviceUUID, const string& characteristic_UUID, bool use_BLE2902) {
@@ -125,7 +109,6 @@ bool ESP32BLEController::setup_ble() {
 void ESP32BLEController::setup_ble_services() {
   bleServer = BLEDevice::createServer();
 
-  maintenance_handler = new BLEMaintenanceHandler();
   maintenance_handler->setup(bleServer);
 
   if (get_ble_mode() != BLEMaintenanceMode::WIFI_ONLY) {
@@ -217,6 +200,10 @@ void ESP32BLEController::set_ble_mode(uint8_t newMode) {
 
 void ESP32BLEController::set_security_enabled(bool enabled) {
   security_enabled = enabled;
+}
+
+void ESP32BLEController::set_command_result(string result_message) {
+  maintenance_handler->set_command_result(result_message);
 }
 
 void ESP32BLEController::dump_config() {

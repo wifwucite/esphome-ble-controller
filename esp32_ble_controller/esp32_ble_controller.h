@@ -12,6 +12,7 @@
 #include "esphome/core/preferences.h"
 
 #include "ble_component_handler_base.h"
+#include "ble_maintenance_handler.h"
 #include "thread_safe_bounded_queue.h"
 
 using std::string;
@@ -21,9 +22,7 @@ using std::vector;
 namespace esphome {
 namespace esp32_ble_controller {
 
-class BLEMaintenanceHandler;
-
-enum class BLEMaintenanceMode : uint8_t { BLE_ONLY, MIXED, WIFI_ONLY };
+class BLEControllerCommandExecutionTrigger;
 
 /**
  * Bluetooth Low Energy controller for ESP32.
@@ -35,6 +34,12 @@ enum class BLEMaintenanceMode : uint8_t { BLE_ONLY, MIXED, WIFI_ONLY };
  */
 class ESP32BLEController : public Component, public Controller, private BLESecurityCallbacks {
 public:
+  ESP32BLEController();
+  virtual ~ESP32BLEController() {}
+
+  void register_command(const string& name, const string& description, BLEControllerCommandExecutionTrigger* trigger);
+  const vector<BLECommand*>& get_commands() const;
+
   void register_component(Nameable* component, const string& service_UUID, const string& characteristic_UUID, bool use_BLE2902 = true);
 
   float get_setup_priority() const override { return setup_priority::PROCESSOR; }
@@ -51,6 +56,13 @@ public:
 
   void set_security_enabled(bool enabled);
   inline bool get_security_enabled() const { return security_enabled; }
+
+  void set_command_result(string result_message);
+
+#ifdef USE_LOGGER
+  int get_log_level() { return maintenance_handler->get_log_level(); }
+  void set_log_level(int level) { maintenance_handler->set_log_level(level); }
+#endif
 
   // Controller methods:
 #ifdef USE_BINARY_SENSOR

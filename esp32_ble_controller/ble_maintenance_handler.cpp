@@ -1,51 +1,50 @@
 #include <BLE2902.h>
 
+#include "esphome/core/log.h"
+
 #include "ble_maintenance_handler.h"
 
 #ifdef USE_LOGGER
 #include "esphome/components/logger/logger.h"
 #endif
 
+#include "esp32_ble_controller.h"
+#include "ble_command.h"
+#include "automation.h"
+#include "ble_utils.h"
+
 // https://www.uuidgenerator.net
-#define SERVICE_UUID                  "7b691dff-9062-4192-b46a-692e0da81d91"
-#define CHARACTERISTIC_UUID_MODE      "9484a6ab-54c9-4432-bff9-13bada528ab7"
-#define CHARACTERISTIC_UUID_LOGGING   "a1083f3b-0ad6-49e0-8a9d-56eb5bf462ca"
-#define CHARACTERISTIC_UUID_LOG_LEVEL "d2af61d2-5086-4a99-94e9-6638edc3d14c"
+#define SERVICE_UUID                "7b691dff-9062-4192-b46a-692e0da81d91"
+#define CHARACTERISTIC_UUID_CMD     "1d3c6498-cfdf-44a1-9038-3e757dcc449d"
+#define CHARACTERISTIC_UUID_LOGGING "a1083f3b-0ad6-49e0-8a9d-56eb5bf462ca"
 
 namespace esphome {
 namespace esp32_ble_controller {
 
 static const char *TAG = "ble_maintenance_handler";
 
+BLEMaintenanceHandler::BLEMaintenanceHandler() {
+  commands.push_back(new BLECommandHelp());
+  commands.push_back(new BLECommandSwitchServicesOnOrOff());
+
+#ifdef USE_LOGGER
+  commands.push_back(new BLECommandLogLevel());
+#endif
+}
+
 void BLEMaintenanceHandler::setup(BLEServer* ble_server) {
   ESP_LOGCONFIG(TAG, "Setting up maintenance service");
 
   BLEService* service = ble_server->createService(SERVICE_UUID);
 
-  ble_mode_characteristic = service->createCharacteristic(CHARACTERISTIC_UUID_MODE,
-      BLECharacteristic::PROPERTY_READ //
-      | BLECharacteristic::PROPERTY_NOTIFY
-      | BLECharacteristic::PROPERTY_WRITE
-  );
-  uint16_t mode = (uint16_t) global_ble_controller->get_ble_mode();
-  ble_mode_characteristic->setValue(mode);
-  ble_mode_characteristic->setCallbacks(this);
+  ble_command_characteristic = create_writeable_ble_characteristic(service, CHARACTERISTIC_UUID_CMD, this, "BLE Command Channel");
+  ble_command_characteristic->setValue("Send 'help' for help.");
+ 
+#ifdef USE_LOGGER
+  logging_characteristic = create_read_only_ble_characteristic(service, CHARACTERISTIC_UUID_LOGGING, "Log messages");
+#endif
 
-  esp_gatt_perm_t access_permissions;
-  if (is_security_enabled()) {
-    access_permissions = ESP_GATT_PERM_READ_ENC_MITM | ESP_GATT_PERM_WRITE_ENC_MITM; // signing (ESP_GATT_PERM_WRITE_SIGNED_MITM) did not work with iPhone
-  } else {
-    access_permissions = ESP_GATT_PERM_READ | ESP_GATT_PERM_WRITE;
-  }
-  ble_mode_characteristic->setAccessPermissions(access_permissions);
-
-  BLEDescriptor* mode_descriptor_2901 = new BLEDescriptor(BLEUUID((uint16_t)0x2901));
-  mode_descriptor_2901->setAccessPermissions(access_permissions);
-  mode_descriptor_2901->setValue("BLE Mode (0=BLE, 1=mixed, 2=WiFi)");
-  ble_mode_characteristic->addDescriptor(mode_descriptor_2901);
-  BLEDescriptor* mode_descriptor_2902 = new BLE2902();
-  mode_descriptor_2902->setAccessPermissions(access_permissions);
-  ble_mode_characteristic->addDescriptor(mode_descriptor_2902);
+  service->start();
 
 #ifdef USE_LOGGER
   log_level = ESPHOME_LOG_LEVEL;
@@ -53,41 +52,6 @@ void BLEMaintenanceHandler::setup(BLEServer* ble_server) {
     log_level = ESPHOME_LOG_LEVEL_CONFIG;
   }
 
-  logging_characteristic = service->createCharacteristic(CHARACTERISTIC_UUID_LOGGING,
-      BLECharacteristic::PROPERTY_READ //
-      | BLECharacteristic::PROPERTY_NOTIFY
-  );
-  logging_characteristic->setAccessPermissions(access_permissions);
-
-  BLEDescriptor* logging_descriptor_2901 = new BLEDescriptor(BLEUUID((uint16_t)0x2901));
-  logging_descriptor_2901->setAccessPermissions(access_permissions);
-  logging_descriptor_2901->setValue("Log messages");
-  logging_characteristic->addDescriptor(logging_descriptor_2901);
-  BLE2902* logging_descriptor_2902 = new BLE2902();
-  logging_descriptor_2902->setAccessPermissions(access_permissions);
-  logging_characteristic->addDescriptor(logging_descriptor_2902);
-  
-  log_level_characteristic = service->createCharacteristic(CHARACTERISTIC_UUID_LOG_LEVEL,
-      BLECharacteristic::PROPERTY_READ //
-      | BLECharacteristic::PROPERTY_NOTIFY //
-      | BLECharacteristic::PROPERTY_WRITE
-  );
-  log_level_characteristic->setAccessPermissions(access_permissions);
-  log_level_characteristic->setValue(log_level);
-  log_level_characteristic->setCallbacks(this);
-
-  BLEDescriptor* log_level_descriptor_2901 = new BLEDescriptor(BLEUUID((uint16_t)0x2901));
-  log_level_descriptor_2901->setAccessPermissions(access_permissions);
-  log_level_descriptor_2901->setValue("Log level (0=None, 4=Config, 5=Debug)");
-  log_level_characteristic->addDescriptor(log_level_descriptor_2901);
-  BLE2902* log_level_descriptor_2902 = new BLE2902();
-  log_level_descriptor_2902->setAccessPermissions(access_permissions);
-  log_level_characteristic->addDescriptor(log_level_descriptor_2902);
-#endif
-
-  service->start();
-
-#ifdef USE_LOGGER
   // NOTE: We register the callback after the service has been started!
   if (logger::global_logger != nullptr) {
     logger::global_logger->add_on_log_callback([this](int level, const char *tag, const char *message) {
@@ -99,36 +63,40 @@ void BLEMaintenanceHandler::setup(BLEServer* ble_server) {
 }
 
 void BLEMaintenanceHandler::onWrite(BLECharacteristic *characteristic) {
-  if (characteristic == ble_mode_characteristic) {
-    global_ble_controller->execute_in_loop([this](){ on_mode_written(); });
-#ifdef USE_LOGGER
-  } else if (characteristic == log_level_characteristic) {
-    global_ble_controller->execute_in_loop([this](){ on_log_level_written(); });
-#endif
+  if (characteristic == ble_command_characteristic) {
+    global_ble_controller->execute_in_loop([this](){ on_command_written(); });
   } else {
     ESP_LOGW(TAG, "Unknown characteristic written!");
   }
 }
 
-void BLEMaintenanceHandler::on_mode_written() {
-    std::string value = ble_mode_characteristic->getValue();
-    if (value.length() == 1) {
-      uint8_t mode = value[0];
-      ESP_LOGD(TAG, "BLE mode chracteristic written: %d", mode);
-      global_ble_controller->set_ble_mode(mode);
+void BLEMaintenanceHandler::on_command_written() {
+  string command_line = ble_command_characteristic->getValue();
+  ESP_LOGD(TAG, "Received BLE command: %s", command_line.c_str());
+  vector<string> tokens = split(command_line);
+  if (!tokens.empty()) {
+    string command_name = tokens[0];
+    for (const auto& command : get_commands()) {
+      if (command->get_name() == command_name) {
+        ESP_LOGI(TAG, "Executing BLE command: %s", command_name.c_str());
+        tokens.erase(tokens.begin());
+        command->execute(tokens);
+        return;
+      }
     }
+    set_command_result("Unkown command '" + command_name + "', try 'help'.");
+  }
+}
+
+void BLEMaintenanceHandler::set_command_result(string result_message) {
+  global_ble_controller->execute_in_loop([this, result_message] { ble_command_characteristic->setValue(result_message); });
+}
+
+bool BLEMaintenanceHandler::is_security_enabled() {
+  return global_ble_controller->get_security_enabled();
 }
 
 #ifdef USE_LOGGER
-void BLEMaintenanceHandler::on_log_level_written() {
-    std::string value = log_level_characteristic->getValue();
-    if (value.length() == 1) {
-      uint8_t level = value[0];
-      ESP_LOGD(TAG, "Log level chracteristic written: %d", level);
-      set_log_level(level);
-    }
-}
-
 /**
  * Removes magic logger symbols from the message, e.g., sequences that mark the start or the end, or a color.
  */
@@ -137,7 +105,7 @@ string remove_logger_magic(const string& message) {
   string result;
   boolean within_magic = false;
   for (string::size_type i = 0; i < message.length() - 1; ++i) {
-    if (message[i] == '\033' && message[i+1] == '[') { // log magis always starts with "\033[" see log.h
+    if (message[i] == '\033' && message[i+1] == '[') { // log magic always starts with "\033[" see log.h
       within_magic = true;
       ++i;
     } else if (within_magic) {
@@ -156,10 +124,6 @@ void BLEMaintenanceHandler::send_log_message(int level, const char *tag, const c
   }
 }
 #endif
-
-bool BLEMaintenanceHandler::is_security_enabled() {
-  return global_ble_controller->get_security_enabled();
-}
 
 } // namespace esp32_ble_controller
 } // namespace esphome

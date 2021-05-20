@@ -42,6 +42,34 @@ BLE_SERVICE = cv.Schema({
     cv.Required(CONF_BLE_CHARACTERISTICS): cv.ensure_list(BLE_CHARACTERISTIC),
 })
 
+# commands
+CONF_BLE_COMMANDS = "commands"
+CONF_BLE_CMD_ID = "command"
+CONF_BLE_CMD_DESCRIPTION = "description"
+CONF_BLE_CMD_ON_EXECUTE = "on_execute"
+BLEControllerExecuteCommandTrigger = esp32_ble_controller_ns.class_('BLEControllerCommandExecutionTrigger', automation.Trigger.template())
+
+BUILTIN_CMD_IDS = ['help', 'log-level', 'ble-services']
+CMD_ID_CHARACTERS = "abcdefghijklmnopqrstuvwxyz0123456789-"
+def validate_command_id(value):
+    """Validate that this value is a valid command id.
+    """
+    value = cv.string_strict(value).lower()
+    if value in BUILTIN_CMD_IDS:
+        raise cv.Invalid(f"{value} is a built-in command")
+    for c in value:
+        if c not in CMD_ID_CHARACTERS:
+            raise cv.Invalid(f"Invalid character for command id: {c}")
+    return value
+
+BLE_COMMAND = cv.Schema({
+    cv.Required(CONF_BLE_CMD_ID): validate_command_id,
+    cv.Required(CONF_BLE_CMD_DESCRIPTION): cv.string_strict,
+    cv.Required(CONF_BLE_CMD_ON_EXECUTE): automation.validate_automation({
+        cv.GenerateID(CONF_TRIGGER_ID): cv.declare_id(BLEControllerExecuteCommandTrigger),
+    }),
+})
+
 # security mode enumeration
 CONF_SECURITY_MODE = 'security_mode'
 CONF_SECURITY_MODE_NONE = 'none'
@@ -75,6 +103,8 @@ CONFIG_SCHEMA = cv.All(cv.only_on_esp32, cv.Schema({
 
     cv.Optional(CONF_BLE_SERVICES): cv.ensure_list(BLE_SERVICE),
 
+    cv.Optional(CONF_BLE_COMMANDS): cv.ensure_list(BLE_COMMAND),
+
     cv.Optional(CONF_SECURITY_MODE, default=CONF_SECURITY_MODE_SHOW_PASS_KEY): cv.enum(SECURTY_MODE_OPTIONS),
 
     cv.Optional(CONF_ON_SHOW_PASS_KEY): automation.validate_automation({
@@ -106,14 +136,27 @@ def to_code_service(ble_controller_var, service):
     for characteristic_description in characteristics:
         yield to_code_characteristic(ble_controller_var, service_uuid, characteristic_description)
 
+@coroutine
+def to_code_command(ble_controller_var, cmd):
+    """Coroutine that registers all BLE commands with BLE controller"""
+    id = cmd[CONF_BLE_CMD_ID]
+    description = cmd[CONF_BLE_CMD_DESCRIPTION]
+    trigger_conf = cmd[CONF_BLE_CMD_ON_EXECUTE][0]
+    trigger = cg.new_Pvariable(trigger_conf[CONF_TRIGGER_ID], ble_controller_var)
+    yield automation.build_automation(trigger, [(cg.std_ns.class_("vector<std::string>"), 'arguments')], trigger_conf)
+    cg.add(ble_controller_var.register_command(id, description, trigger))
+    print(id, description, trigger_conf, trigger)
+
 def to_code(config):
     """Generates the C++ code for the BLE controller configuration"""
     var = cg.new_Pvariable(config[CONF_ID])
     yield cg.register_component(var, config)
 
-    if CONF_BLE_SERVICES in config:
-        for service in config[CONF_BLE_SERVICES]:
-            yield to_code_service(var, service)
+    for cmd in config.get(CONF_BLE_SERVICES, []):
+        yield to_code_service(var, cmd)
+
+    for cmd in config.get(CONF_BLE_COMMANDS, []):
+        yield to_code_command(var, cmd)
 
     security_enabled = SECURTY_MODE_OPTIONS[config[CONF_SECURITY_MODE]]
     cg.add(var.set_security_enabled(config[CONF_SECURITY_MODE]))

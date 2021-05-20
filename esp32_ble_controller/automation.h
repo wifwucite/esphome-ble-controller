@@ -27,5 +27,11 @@ public:
   }
 };
 
+/// Trigger that is fired when a command is executed.
+class BLEControllerCommandExecutionTrigger : public Trigger<std::vector<std::string>> {
+public:
+  BLEControllerCommandExecutionTrigger(ESP32BLEController* controller) {}
+};
+
 } // namespace esp32_ble_controller
 } // namespace esphome
