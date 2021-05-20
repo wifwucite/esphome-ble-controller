@@ -145,7 +145,6 @@ def to_code_command(ble_controller_var, cmd):
     trigger = cg.new_Pvariable(trigger_conf[CONF_TRIGGER_ID], ble_controller_var)
     yield automation.build_automation(trigger, [(cg.std_ns.class_("vector<std::string>"), 'arguments')], trigger_conf)
     cg.add(ble_controller_var.register_command(id, description, trigger))
-    print(id, description, trigger_conf, trigger)
 
 def to_code(config):
     """Generates the C++ code for the BLE controller configuration"""
