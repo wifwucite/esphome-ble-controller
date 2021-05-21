@@ -32,7 +32,7 @@ class BLEControllerCommandExecutionTrigger;
  * Besides the generic maintenance, this controller only exposes components over BLE that have been registered before (i.e. configured explicitly in the yaml configuration).
  * @brief BLE controller for ESP32
  */
-class ESP32BLEController : public Component, public Controller, private BLESecurityCallbacks {
+class ESP32BLEController : public Component, public Controller, private BLESecurityCallbacks, private BLEServerCallbacks {
 public:
   ESP32BLEController();
   virtual ~ESP32BLEController() {}
@@ -100,7 +100,7 @@ private:
   void initialize_ble_mode();
 
   bool setup_ble();
-  void setup_ble_services();
+  void setup_ble_server_and_services();
   void setup_ble_services_for_components();
   template <typename C> void setup_ble_services_for_components(const vector<C*>& components, BLEComponentHandlerBase* (*handler_creator)(C*, const BLECharacteristicInfoForHandler&));
   template <typename C> void setup_ble_service_for_component(C* component, BLEComponentHandlerBase* (*handler_creator)(C*, const BLECharacteristicInfoForHandler&));
@@ -113,8 +113,13 @@ private:
   virtual void onAuthenticationComplete(esp_ble_auth_cmpl_t); // inherited from BLESecurityCallbacks
   virtual bool onConfirmPIN(uint32_t pin); // inherited from BLESecurityCallbacks
   
+  virtual void onConnect(BLEServer* server); // inherited from BLEServerCallbacks
+  virtual void onDisconnect(BLEServer* server); // inherited from BLEServerCallbacks
+  void on_server_connected();
+  void on_server_disconnected();
+
 private:
-  BLEServer* bleServer;
+  BLEServer* ble_server;
 
   BLEMaintenanceMode ble_mode;
   ESPPreferenceObject ble_mode_preference;

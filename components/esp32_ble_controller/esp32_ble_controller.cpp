@@ -57,7 +57,7 @@ void ESP32BLEController::setup() {
   // Create the BLE Device
   BLEDevice::init(App.get_name());
 
-  setup_ble_services();
+  setup_ble_server_and_services();
 
   setup_controller();
 
@@ -106,10 +106,11 @@ bool ESP32BLEController::setup_ble() {
   return true;
 }
 
-void ESP32BLEController::setup_ble_services() {
-  bleServer = BLEDevice::createServer();
+void ESP32BLEController::setup_ble_server_and_services() {
+  ble_server = BLEDevice::createServer();
+  ble_server->setCallbacks(this);
 
-  maintenance_handler->setup(bleServer);
+  maintenance_handler->setup(ble_server);
 
   if (get_ble_mode() != BLEMaintenanceMode::WIFI_ONLY) {
     setup_ble_services_for_components();
@@ -143,7 +144,7 @@ void ESP32BLEController::setup_ble_services_for_components() {
 #endif
 
   for (auto const& entry : handler_for_component) {
-    entry.second->setup(bleServer);
+    entry.second->setup(ble_server);
   }
 }
 
@@ -342,6 +343,26 @@ bool ESP32BLEController::onSecurityRequest() {
 bool ESP32BLEController::onConfirmPIN(uint32_t pin) {
   global_ble_controller->execute_in_loop([](){ ESP_LOGD(TAG, "onConfirmPIN"); });
   return true;
+}
+
+void ESP32BLEController::ESP32BLEController::onConnect(BLEServer* server) {
+  global_ble_controller->execute_in_loop([this](){ on_server_connected(); });
+}
+
+void ESP32BLEController::ESP32BLEController::onDisconnect(BLEServer* server) {
+  global_ble_controller->execute_in_loop([this](){ on_server_disconnected(); });
+}
+
+void ESP32BLEController::ESP32BLEController::on_server_connected() {
+  ESP_LOGI(TAG, "server connected");
+}
+
+void ESP32BLEController::ESP32BLEController::on_server_disconnected() {
+  ESP_LOGI(TAG, "server disconnected");
+
+  // after 500ms start advertising again
+  const uint32_t delay_millis = 500;
+  App.scheduler.set_timeout(this, "", delay_millis, []{ BLEDevice::startAdvertising(); });
 }
 
 ESP32BLEController* global_ble_controller = nullptr;
