@@ -80,6 +80,11 @@ esp32_ble_controller:
   - logger.log:
       format: "BLE authentication complete %d" # shows 1 on success, 0 on failure
       args: 'success'
+  # automations that are invoked when the device is connected to / disconnected from a client (phone or tablet for example)
+  on_connected:
+  - logger.log: "I am connected. :-)"
+  on_disconnected:
+  - logger.log: "I am disconnected. :-("
 ```
 
 ## Features

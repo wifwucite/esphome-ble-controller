@@ -37,10 +37,18 @@ public:
   ESP32BLEController();
   virtual ~ESP32BLEController() {}
 
+  void register_component(Nameable* component, const string& service_UUID, const string& characteristic_UUID, bool use_BLE2902 = true);
+
   void register_command(const string& name, const string& description, BLEControllerCommandExecutionTrigger* trigger);
   const vector<BLECommand*>& get_commands() const;
 
-  void register_component(Nameable* component, const string& service_UUID, const string& characteristic_UUID, bool use_BLE2902 = true);
+  void add_on_show_pass_key_callback(std::function<void(string)>&& trigger_function);
+  void add_on_authentication_complete_callback(std::function<void(boolean)>&& trigger_function);
+  void add_on_connected_callback(std::function<void()>&& trigger_function);
+  void add_on_disconnected_callback(std::function<void()>&& trigger_function);
+
+  void set_security_enabled(bool enabled);
+  inline bool get_security_enabled() const { return security_enabled; }
 
   float get_setup_priority() const override { return setup_priority::PROCESSOR; }
 
@@ -53,9 +61,6 @@ public:
   inline BLEMaintenanceMode get_ble_mode() const { return ble_mode; }
   void set_ble_mode(BLEMaintenanceMode mode);
   void set_ble_mode(uint8_t mode);
-
-  void set_security_enabled(bool enabled);
-  inline bool get_security_enabled() const { return security_enabled; }
 
   void set_command_result(string result_message);
 
@@ -90,9 +95,6 @@ public:
   void on_climate_update(climate::Climate *obj) override;
 #endif
 
-  void add_on_show_pass_key_callback(std::function<void(string)>&& trigger_function);
-  void add_on_authentication_complete_callback(std::function<void(boolean)>&& trigger_function);
-
   /// Executes a given function in the main loop of the app. (Can be called from another RTOS task.)
   void execute_in_loop(std::function<void()>&& deferred_function);
 
@@ -115,8 +117,6 @@ private:
   
   virtual void onConnect(BLEServer* server); // inherited from BLEServerCallbacks
   virtual void onDisconnect(BLEServer* server); // inherited from BLEServerCallbacks
-  void on_server_connected();
-  void on_server_disconnected();
 
 private:
   BLEServer* ble_server;
@@ -133,8 +133,10 @@ private:
 
   ThreadSafeBoundedQueue<std::function<void()>> deferred_functions_for_loop{16};
 
-  CallbackManager<void(string)> on_show_pass_key_callbacks;
+  CallbackManager<void(string)>  on_show_pass_key_callbacks;
   CallbackManager<void(boolean)> on_authentication_complete_callbacks;
+  CallbackManager<void()>        on_connected_callbacks;
+  CallbackManager<void()>        on_disconnected_callbacks;
 };
 
 /// The BLE controller singleton.

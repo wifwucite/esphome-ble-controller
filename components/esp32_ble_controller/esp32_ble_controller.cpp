@@ -22,13 +22,7 @@ static const char *TAG = "esp32_ble_controller";
 
 ESP32BLEController::ESP32BLEController() : maintenance_handler(new BLEMaintenanceHandler()) {}
 
-void ESP32BLEController::ESP32BLEController::register_command(const string& name, const string& description, BLEControllerCommandExecutionTrigger* trigger) {
-  maintenance_handler->add_command(new BLECommandCustom(name, description, trigger));
-}
-
-const vector<BLECommand*>& ESP32BLEController::get_commands() const {
-  return maintenance_handler->get_commands();
-}
+/// pre-setup configuration ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void ESP32BLEController::register_component(Nameable* component, const string& serviceUUID, const string& characteristic_UUID, bool use_BLE2902) {
   BLECharacteristicInfoForHandler info;
@@ -38,6 +32,36 @@ void ESP32BLEController::register_component(Nameable* component, const string& s
 
   info_for_component[component->get_object_id()] = info;
 }
+
+void ESP32BLEController::ESP32BLEController::register_command(const string& name, const string& description, BLEControllerCommandExecutionTrigger* trigger) {
+  maintenance_handler->add_command(new BLECommandCustom(name, description, trigger));
+}
+
+const vector<BLECommand*>& ESP32BLEController::get_commands() const {
+  return maintenance_handler->get_commands();
+}
+
+void ESP32BLEController::add_on_show_pass_key_callback(std::function<void(string)>&& trigger_function) {
+  on_show_pass_key_callbacks.add(std::move(trigger_function));
+}
+
+void ESP32BLEController::add_on_authentication_complete_callback(std::function<void(bool)>&& trigger_function) {
+  on_authentication_complete_callbacks.add(std::move(trigger_function));
+}
+
+void ESP32BLEController::add_on_connected_callback(std::function<void()>&& trigger_function) {
+  on_connected_callbacks.add(std::move(trigger_function));
+}
+
+void ESP32BLEController::add_on_disconnected_callback(std::function<void()>&& trigger_function) {
+  on_disconnected_callbacks.add(std::move(trigger_function));
+}
+
+void ESP32BLEController::set_security_enabled(bool enabled) {
+  security_enabled = enabled;
+}
+
+/// setup ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void ESP32BLEController::setup() {
   ESP_LOGCONFIG(TAG, "Setting up BLE controller...");
@@ -199,14 +223,6 @@ void ESP32BLEController::set_ble_mode(uint8_t newMode) {
   }
 }
 
-void ESP32BLEController::set_security_enabled(bool enabled) {
-  security_enabled = enabled;
-}
-
-void ESP32BLEController::set_command_result(string result_message) {
-  maintenance_handler->set_command_result(result_message);
-}
-
 void ESP32BLEController::dump_config() {
   ESP_LOGCONFIG(TAG, "Bluetooth Low Energy Controller:");
   ESP_LOGCONFIG(TAG, "  BLE mode: %d", (uint8_t) ble_mode);
@@ -217,6 +233,12 @@ void ESP32BLEController::dump_config() {
   } else {
     ESP_LOGCONFIG(TAG, "  security disabled");
   }
+}
+
+/// run ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void ESP32BLEController::set_command_result(string result_message) {
+  maintenance_handler->set_command_result(result_message);
 }
 
 #ifdef USE_BINARY_SENSOR
@@ -253,14 +275,6 @@ void ESP32BLEController::update_component_state(C* component, S state) {
   if (handler != nullptr) {
     handler->send_value(state);
   }
-}
-
-void ESP32BLEController::add_on_show_pass_key_callback(std::function<void(string)>&& trigger_function) {
-  on_show_pass_key_callbacks.add(std::move(trigger_function));
-}
-
-void ESP32BLEController::add_on_authentication_complete_callback(std::function<void(bool)>&& trigger_function) {
-  on_authentication_complete_callbacks.add(std::move(trigger_function));
 }
 
 void ESP32BLEController::execute_in_loop(std::function<void()>&& deferred_function) {
@@ -346,23 +360,24 @@ bool ESP32BLEController::onConfirmPIN(uint32_t pin) {
 }
 
 void ESP32BLEController::ESP32BLEController::onConnect(BLEServer* server) {
-  global_ble_controller->execute_in_loop([this](){ on_server_connected(); });
+  auto& callbacks = on_connected_callbacks;
+  global_ble_controller->execute_in_loop([&callbacks](){ 
+    ESP_LOGD(TAG, "BLE server - connected");
+    callbacks.call();
+  });
 }
 
 void ESP32BLEController::ESP32BLEController::onDisconnect(BLEServer* server) {
-  global_ble_controller->execute_in_loop([this](){ on_server_disconnected(); });
-}
+  auto& callbacks = on_disconnected_callbacks;
+  global_ble_controller->execute_in_loop([&callbacks, this](){ 
+    ESP_LOGD(TAG, "BLE server - disconnected");
 
-void ESP32BLEController::ESP32BLEController::on_server_connected() {
-  ESP_LOGI(TAG, "server connected");
-}
+    // after 500ms start advertising again
+    const uint32_t delay_millis = 500;
+    App.scheduler.set_timeout(this, "", delay_millis, []{ BLEDevice::startAdvertising(); });
 
-void ESP32BLEController::ESP32BLEController::on_server_disconnected() {
-  ESP_LOGI(TAG, "server disconnected");
-
-  // after 500ms start advertising again
-  const uint32_t delay_millis = 500;
-  App.scheduler.set_timeout(this, "", delay_millis, []{ BLEDevice::startAdvertising(); });
+    callbacks.call(); 
+  });
 }
 
 ESP32BLEController* global_ble_controller = nullptr;

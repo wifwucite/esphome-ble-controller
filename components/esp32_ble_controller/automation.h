@@ -27,6 +27,26 @@ public:
   }
 };
 
+/// Trigger that is fired when the BLE server has connected to a client.
+class BLEControllerServerConnectedTrigger : public Trigger<> {
+public:
+  BLEControllerServerConnectedTrigger(ESP32BLEController* controller) {
+    controller->add_on_connected_callback([this]() {
+      this->trigger();
+    });
+  }
+};
+
+/// Trigger that is fired when the BLE server has disconnected from a client.
+class BLEControllerServerDisconnectedTrigger : public Trigger<> {
+public:
+  BLEControllerServerDisconnectedTrigger(ESP32BLEController* controller) {
+    controller->add_on_disconnected_callback([this]() {
+      this->trigger();
+    });
+  }
+};
+
 /// Trigger that is fired when a command is executed.
 class BLEControllerCommandExecutionTrigger : public Trigger<std::vector<std::string>> {
 public:

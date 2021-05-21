@@ -15,7 +15,7 @@ ESP32BLEController = esp32_ble_controller_ns.class_('ESP32BLEController', cg.Com
 
 ### Configuration validation ############################################################################################
 
-# BLE services and characteristics
+# BLE services and characteristics #####
 CONF_BLE_SERVICES = "services"
 CONF_BLE_SERVICE = "service"
 CONF_BLE_CHARACTERISTICS = "characteristics"
@@ -42,7 +42,7 @@ BLE_SERVICE = cv.Schema({
     cv.Required(CONF_BLE_CHARACTERISTICS): cv.ensure_list(BLE_CHARACTERISTIC),
 })
 
-# commands
+# commands #####
 CONF_BLE_COMMANDS = "commands"
 CONF_BLE_CMD_ID = "command"
 CONF_BLE_CMD_DESCRIPTION = "description"
@@ -70,7 +70,7 @@ BLE_COMMAND = cv.Schema({
     }),
 })
 
-# security mode enumeration
+# security mode enumeration #####
 CONF_SECURITY_MODE = 'security_mode'
 CONF_SECURITY_MODE_NONE = 'none'
 CONF_SECURITY_MODE_SHOW_PASS_KEY = 'show_pass_key'
@@ -79,7 +79,7 @@ SECURTY_MODE_OPTIONS = {
     CONF_SECURITY_MODE_SHOW_PASS_KEY: True,
 }
 
-# authetication automations
+# authetication and (dis)connected automations #####
 CONF_ON_SHOW_PASS_KEY = "on_show_pass_key"
 BLEControllerShowPassKeyTrigger = esp32_ble_controller_ns.class_('BLEControllerShowPassKeyTrigger', automation.Trigger.template())
 
@@ -97,7 +97,13 @@ def automations_available(config):
     require_config_setting_for_automation(CONF_ON_AUTHENTICATION_COMPLETE, CONF_SECURITY_MODE, CONF_SECURITY_MODE_SHOW_PASS_KEY, config)
     return config
 
-# Schema for the controller (incl. validation)
+CONF_ON_SERVER_CONNECTED = "on_connected"
+BLEControllerServerConnectedTrigger = esp32_ble_controller_ns.class_('BLEControllerServerConnectedTrigger', automation.Trigger.template())
+
+CONF_ON_SERVER_DISCONNECTED = "on_disconnected"
+BLEControllerServerDisconnectedTrigger = esp32_ble_controller_ns.class_('BLEControllerServerDisconnectedTrigger', automation.Trigger.template())
+
+# Schema for the controller (incl. validation) #####
 CONFIG_SCHEMA = cv.All(cv.only_on_esp32, cv.Schema({
     cv.GenerateID(): cv.declare_id(ESP32BLEController),
 
@@ -112,6 +118,13 @@ CONFIG_SCHEMA = cv.All(cv.only_on_esp32, cv.Schema({
     }),
     cv.Optional(CONF_ON_AUTHENTICATION_COMPLETE): automation.validate_automation({
         cv.GenerateID(CONF_TRIGGER_ID): cv.declare_id(BLEControllerAuthenticationCompleteTrigger),
+    }),
+
+    cv.Optional(CONF_ON_SERVER_CONNECTED): automation.validate_automation({
+        cv.GenerateID(CONF_TRIGGER_ID): cv.declare_id(BLEControllerServerConnectedTrigger),
+    }),
+    cv.Optional(CONF_ON_SERVER_DISCONNECTED): automation.validate_automation({
+        cv.GenerateID(CONF_TRIGGER_ID): cv.declare_id(BLEControllerServerDisconnectedTrigger),
     }),
 
     }), automations_available)
@@ -169,3 +182,11 @@ def to_code(config):
         if security_enabled:
             trigger = cg.new_Pvariable(conf[CONF_TRIGGER_ID], var)
             yield automation.build_automation(trigger, [(cg.bool_, 'success')], conf)
+
+    for conf in config.get(CONF_ON_SERVER_CONNECTED, []):
+        trigger = cg.new_Pvariable(conf[CONF_TRIGGER_ID], var)
+        yield automation.build_automation(trigger, [], conf)
+
+    for conf in config.get(CONF_ON_SERVER_DISCONNECTED, []):
+        trigger = cg.new_Pvariable(conf[CONF_TRIGGER_ID], var)
+        yield automation.build_automation(trigger, [], conf)
