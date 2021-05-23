@@ -22,7 +22,7 @@ using std::vector;
 namespace esphome {
 namespace esp32_ble_controller {
 
-class BLEControllerCommandExecutionTrigger;
+class BLEControllerCustomCommandExecutionTrigger;
 
 /**
  * Bluetooth Low Energy controller for ESP32.
@@ -39,7 +39,7 @@ public:
 
   void register_component(Nameable* component, const string& service_UUID, const string& characteristic_UUID, bool use_BLE2902 = true);
 
-  void register_command(const string& name, const string& description, BLEControllerCommandExecutionTrigger* trigger);
+  void register_command(const string& name, const string& description, BLEControllerCustomCommandExecutionTrigger* trigger);
   const vector<BLECommand*>& get_commands() const;
 
   void add_on_show_pass_key_callback(std::function<void(string)>&& trigger_function);
@@ -62,7 +62,7 @@ public:
   void set_ble_mode(BLEMaintenanceMode mode);
   void set_ble_mode(uint8_t mode);
 
-  void set_command_result(string result_message);
+  void set_command_result(const string& result_message);
 
 #ifdef USE_LOGGER
   int get_log_level() { return maintenance_handler->get_log_level(); }

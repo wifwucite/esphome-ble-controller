@@ -11,6 +11,8 @@ using std::vector;
 namespace esphome {
 namespace esp32_ble_controller {
 
+// generic ///////////////////////////////////////////////////////////////////////////////////////////////
+
 class BLECommand {
 public:
   BLECommand(const string& name, const string& description) : name(name), description(description) {}
@@ -27,6 +29,8 @@ private:
   string description;
 };
 
+// help ///////////////////////////////////////////////////////////////////////////////////////////////
+
 class BLECommandHelp : public BLECommand {
 public:
   BLECommandHelp();
@@ -34,6 +38,8 @@ public:
 
   virtual void execute(const vector<string>& arguments) const override;
 };
+
+// ble-services ///////////////////////////////////////////////////////////////////////////////////////////////
 
 class BLECommandSwitchServicesOnOrOff : public BLECommand {
 public:
@@ -43,18 +49,7 @@ public:
   virtual void execute(const vector<string>& arguments) const override;
 };
 
-class BLEControllerCommandExecutionTrigger;
-
-class BLECommandCustom : public BLECommand {
-public:
-  BLECommandCustom(const string& name, const string& description, BLEControllerCommandExecutionTrigger* trigger);
-  virtual ~BLECommandCustom() {}
-
-  virtual void execute(const vector<string>& arguments) const override;
-
-private:
-  BLEControllerCommandExecutionTrigger* trigger;
-};
+// log-level ///////////////////////////////////////////////////////////////////////////////////////////////
 
 #ifdef USE_LOGGER
 class BLECommandLogLevel : public BLECommand {
@@ -65,6 +60,21 @@ public:
   virtual void execute(const vector<string>& arguments) const override;
 };
 #endif
+
+// custom ///////////////////////////////////////////////////////////////////////////////////////////////
+
+class BLEControllerCustomCommandExecutionTrigger;
+
+class BLECustomCommand : public BLECommand {
+public:
+  BLECustomCommand(const string& name, const string& description, BLEControllerCustomCommandExecutionTrigger* trigger);
+  virtual ~BLECustomCommand() {}
+
+  virtual void execute(const vector<string>& arguments) const override;
+
+private:
+  BLEControllerCustomCommandExecutionTrigger* trigger;
+};
 
 } // namespace esp32_ble_controller
 } // namespace esphome

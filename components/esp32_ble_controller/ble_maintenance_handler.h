@@ -17,7 +17,7 @@ namespace esp32_ble_controller {
 enum class BLEMaintenanceMode : uint8_t { BLE_ONLY, MIXED, WIFI_ONLY };
 
 class BLECommand;
-class BLEControllerCommandExecutionTrigger;
+class BLEControllerCustomCommandExecutionTrigger;
 
 /**
  * Provides standard maintenance support for the BLE controller like logging over BLE and controlling BLE mode.
@@ -34,7 +34,7 @@ public:
 
   void add_command(BLECommand* command) { commands.push_back(command); }
   const vector<BLECommand*>& get_commands() const { return commands; }
-  void set_command_result(string result_message);
+  void set_command_result(const string& result_message);
 
   void set_ble_mode(BLEMaintenanceMode mode);
 

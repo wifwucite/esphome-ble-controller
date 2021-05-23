@@ -1,11 +1,14 @@
 #pragma once
 
 #include "esphome/core/automation.h"
+#include "esphome/core/optional.h"
 
 #include "esp32_ble_controller.h"
 
 namespace esphome {
 namespace esp32_ble_controller {
+
+// authentication ///////////////////////////////////////////////////////////////////////////////////////////////
 
 /// Trigger for showing the pass key during authentication with a client.
 class BLEControllerShowPassKeyTrigger : public Trigger<std::string> {
@@ -27,6 +30,8 @@ public:
   }
 };
 
+// connect & disconnect ///////////////////////////////////////////////////////////////////////////////////////////////
+
 /// Trigger that is fired when the BLE server has connected to a client.
 class BLEControllerServerConnectedTrigger : public Trigger<> {
 public:
@@ -47,10 +52,24 @@ public:
   }
 };
 
-/// Trigger that is fired when a command is executed.
-class BLEControllerCommandExecutionTrigger : public Trigger<std::vector<std::string>> {
+// custom command execution ///////////////////////////////////////////////////////////////////////////////////////////////
+
+class BLECustomCommandResultHolder {
 public:
-  BLEControllerCommandExecutionTrigger(ESP32BLEController* controller) {}
+  BLECustomCommandResultHolder() : result(new optional<string>()) {}
+  BLECustomCommandResultHolder(const BLECustomCommandResultHolder& other) : result(other.result) {}
+  BLECustomCommandResultHolder& operator=(const BLECustomCommandResultHolder& other) { result = other.result; return *this; }
+
+  void operator=(const string& new_result) { *result = make_optional(new_result); }
+  const optional<string>& get_result() const { return *result; }
+private:
+  optional<string>* result;
+};
+
+/// Trigger that is fired when a custom command is executed.
+class BLEControllerCustomCommandExecutionTrigger : public Trigger<std::vector<std::string>, BLECustomCommandResultHolder> {
+public:
+  BLEControllerCustomCommandExecutionTrigger(ESP32BLEController* controller) {}
 };
 
 } // namespace esp32_ble_controller

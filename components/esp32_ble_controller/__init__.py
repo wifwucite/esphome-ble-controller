@@ -42,12 +42,12 @@ BLE_SERVICE = cv.Schema({
     cv.Required(CONF_BLE_CHARACTERISTICS): cv.ensure_list(BLE_CHARACTERISTIC),
 })
 
-# commands #####
+# custom commands #####
 CONF_BLE_COMMANDS = "commands"
 CONF_BLE_CMD_ID = "command"
 CONF_BLE_CMD_DESCRIPTION = "description"
 CONF_BLE_CMD_ON_EXECUTE = "on_execute"
-BLEControllerExecuteCommandTrigger = esp32_ble_controller_ns.class_('BLEControllerCommandExecutionTrigger', automation.Trigger.template())
+BLEControllerCustomCommandExecutionTrigger = esp32_ble_controller_ns.class_('BLEControllerCustomCommandExecutionTrigger', automation.Trigger.template())
 
 BUILTIN_CMD_IDS = ['help', 'log-level', 'ble-services']
 CMD_ID_CHARACTERS = "abcdefghijklmnopqrstuvwxyz0123456789-"
@@ -66,7 +66,7 @@ BLE_COMMAND = cv.Schema({
     cv.Required(CONF_BLE_CMD_ID): validate_command_id,
     cv.Required(CONF_BLE_CMD_DESCRIPTION): cv.string_strict,
     cv.Required(CONF_BLE_CMD_ON_EXECUTE): automation.validate_automation({
-        cv.GenerateID(CONF_TRIGGER_ID): cv.declare_id(BLEControllerExecuteCommandTrigger),
+        cv.GenerateID(CONF_TRIGGER_ID): cv.declare_id(BLEControllerCustomCommandExecutionTrigger),
     }),
 })
 
@@ -156,7 +156,7 @@ def to_code_command(ble_controller_var, cmd):
     description = cmd[CONF_BLE_CMD_DESCRIPTION]
     trigger_conf = cmd[CONF_BLE_CMD_ON_EXECUTE][0]
     trigger = cg.new_Pvariable(trigger_conf[CONF_TRIGGER_ID], ble_controller_var)
-    yield automation.build_automation(trigger, [(cg.std_ns.class_("vector<std::string>"), 'arguments')], trigger_conf)
+    yield automation.build_automation(trigger, [(cg.std_ns.class_("vector<std::string>"), 'arguments'), (esp32_ble_controller_ns.class_("BLECustomCommandResultHolder"), 'result')], trigger_conf)
     cg.add(ble_controller_var.register_command(id, description, trigger))
 
 def to_code(config):

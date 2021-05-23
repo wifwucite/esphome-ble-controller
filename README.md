@@ -99,7 +99,7 @@ The maintenance BLE service is provided implicitly when you include `esp32_ble_c
 
 * Command channel (UTF-8 string, read-write):
 Allows to send commands to the ESP32 and receives answers back from it. A command is a string which consists of the name of the command and (possibly) arguments, separated by spaces.
-You can define your own custom commands in yaml as described above. A custom commmand consists of three parts: name, description (shown by help) and the `on_execute` automation that is executed when the command runs. A custom command can have arguments which are passed to the automation as a vector of strings named `arguments`.
+You can define your own custom commands in yaml as described below in detail.
 There are also some built-in commands, which are always available:
   * help [command]:
     Without argument, it lists all available commands. When the name of a command is given like in "help log-level" it displays a specific description for this command.
@@ -110,6 +110,29 @@ There are also some built-in commands, which are always available:
       ⚠️ **Note**: You cannot get finer logging than the overall log level specified for the [logger component](https://esphome.io/components/logger.html).
 * Log messages (UTF-8 string, read-only):  
 Provides the latest log message that matches the configured log level.
+
+#### Custom commands
+
+ A custom commmand consists of three parts: name, description (shown by help) and the `on_execute` automation that is executed when the command runs. A custom command can have arguments which are passed to the automation as a vector of strings named `arguments`. In addition a custom command can return a result, which can be defined by assigning a string to the `result` argument as shown in the example below. If defined the result will be written to the command channel charactreistic, where it can be read by a client.
+ 
+ ```yaml
+esp32_ble_controller:
+  commands:
+  - command: test-cmd
+    description: just a test
+    on_execute:
+    - if:
+        condition:
+          lambda: 'return arguments.empty();'
+        then:
+          - logger.log: "test command executed without arguments"
+        else:
+          - logger.log:
+              format: "test command executed with argument %s"
+              args: 'arguments[0].c_str()'
+    - lambda: |-
+        result = "done with test command";
+```
 
 ### Supported components
 

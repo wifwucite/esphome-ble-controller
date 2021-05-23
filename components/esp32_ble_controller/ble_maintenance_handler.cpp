@@ -4,6 +4,7 @@
 
 #include "ble_maintenance_handler.h"
 
+#include "esphome/core/application.h"
 #ifdef USE_LOGGER
 #include "esphome/components/logger/logger.h"
 #endif
@@ -88,8 +89,14 @@ void BLEMaintenanceHandler::on_command_written() {
   }
 }
 
-void BLEMaintenanceHandler::set_command_result(string result_message) {
-  global_ble_controller->execute_in_loop([this, result_message] { ble_command_characteristic->setValue(result_message); });
+void BLEMaintenanceHandler::set_command_result(const string& result_message) {
+  global_ble_controller->execute_in_loop([this, result_message] { 
+     ble_command_characteristic->setValue(result_message);
+  });
+  // global_ble_controller->execute_in_loop([this, result_message] { 
+  //   const uint32_t delay_millis = 50;
+  //   App.scheduler.set_timeout(global_ble_controller, "command_result", delay_millis, [this, result_message]{ ble_command_characteristic->setValue(result_message); });
+  // });
 }
 
 bool BLEMaintenanceHandler::is_security_enabled() {

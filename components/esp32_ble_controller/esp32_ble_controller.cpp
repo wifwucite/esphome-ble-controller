@@ -33,8 +33,8 @@ void ESP32BLEController::register_component(Nameable* component, const string& s
   info_for_component[component->get_object_id()] = info;
 }
 
-void ESP32BLEController::ESP32BLEController::register_command(const string& name, const string& description, BLEControllerCommandExecutionTrigger* trigger) {
-  maintenance_handler->add_command(new BLECommandCustom(name, description, trigger));
+void ESP32BLEController::ESP32BLEController::register_command(const string& name, const string& description, BLEControllerCustomCommandExecutionTrigger* trigger) {
+  maintenance_handler->add_command(new BLECustomCommand(name, description, trigger));
 }
 
 const vector<BLECommand*>& ESP32BLEController::get_commands() const {
@@ -237,7 +237,7 @@ void ESP32BLEController::dump_config() {
 
 /// run ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void ESP32BLEController::set_command_result(string result_message) {
+void ESP32BLEController::set_command_result(const string& result_message) {
   maintenance_handler->set_command_result(result_message);
 }
 
