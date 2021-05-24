@@ -2,6 +2,8 @@ This component provides a Bluetooth Low Energy (BLE) controller for [ESPHome](ht
 
 ![BLE connection from phone](BLE-Services-and-Characteristics.png)
 
+In addition, there is a command channel, which allows to configure the WIFI credentials for the ESP32 over BLE (among other things).
+
 ⚠️ **Note**: This controller only works with ESP32 micro-controllers, not with ESP8266 chips because they do not offer built-in BLE support.
 
 ## Installation
