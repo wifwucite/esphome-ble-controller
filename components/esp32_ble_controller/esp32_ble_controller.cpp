@@ -87,6 +87,8 @@ void ESP32BLEController::setup() {
 
   enable_ble_security();
 
+  wifi_configuration_handler.setup();
+
   // Start advertising
   // BLEAdvertising* advertising = BLEDevice::getAdvertising();
   // advertising->setMinInterval(0x800); // suggested default: 1.28s
@@ -191,7 +193,8 @@ void ESP32BLEController::setup_ble_service_for_component(C* component, BLECompon
 }
 
 void ESP32BLEController::initialize_ble_mode() {
-  ble_mode_preference = global_preferences.make_preference<uint8_t>(fnv1_hash("BLEMaintenanceMode"));
+  // Note: We include the compilation time to force a reset after flashing new firmware
+  ble_mode_preference = global_preferences.make_preference<uint8_t>(fnv1_hash("ble-mode#" + App.get_compilation_time()));
 
   uint8_t mode;
   if (!ble_mode_preference.load(&mode)) {
@@ -221,6 +224,11 @@ void ESP32BLEController::set_ble_mode(uint8_t newMode) {
 
     App.safe_reboot();
   }
+}
+
+
+void ESP32BLEController::ESP32BLEController::set_wifi_configuration(const string& ssid, const string& password, bool hidden_network) {
+  wifi_configuration_handler.set_credentials(ssid, password, hidden_network);
 }
 
 void ESP32BLEController::dump_config() {

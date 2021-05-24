@@ -1,9 +1,8 @@
 #include <BLE2902.h>
 
-#include "esphome/core/log.h"
-
 #include "ble_maintenance_handler.h"
 
+#include "esphome/core/log.h"
 #include "esphome/core/application.h"
 #ifdef USE_LOGGER
 #include "esphome/components/logger/logger.h"
@@ -27,6 +26,7 @@ static const char *TAG = "ble_maintenance_handler";
 BLEMaintenanceHandler::BLEMaintenanceHandler() {
   commands.push_back(new BLECommandHelp());
   commands.push_back(new BLECommandSwitchServicesOnOrOff());
+  commands.push_back(new BLECommandWifiConfiguration());
 
 #ifdef USE_LOGGER
   commands.push_back(new BLECommandLogLevel());
@@ -60,7 +60,7 @@ void BLEMaintenanceHandler::setup(BLEServer* ble_server) {
       this->send_log_message(level, tag, message);
     });
   }
-#endif    
+#endif
 }
 
 void BLEMaintenanceHandler::onWrite(BLECharacteristic *characteristic) {

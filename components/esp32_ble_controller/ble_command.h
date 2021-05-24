@@ -24,6 +24,9 @@ public:
 
   virtual void execute(const std::vector<string>& arguments) const = 0;
 
+protected:
+  void set_result(const string& result) const;
+
 private:
   string name;
   string description;
@@ -45,6 +48,16 @@ class BLECommandSwitchServicesOnOrOff : public BLECommand {
 public:
   BLECommandSwitchServicesOnOrOff();
   virtual ~BLECommandSwitchServicesOnOrOff() {}
+
+  virtual void execute(const vector<string>& arguments) const override;
+};
+
+// wifi-config ///////////////////////////////////////////////////////////////////////////////////////////////
+
+class BLECommandWifiConfiguration : public BLECommand {
+public:
+  BLECommandWifiConfiguration();
+  virtual ~BLECommandWifiConfiguration() {}
 
   virtual void execute(const vector<string>& arguments) const override;
 };

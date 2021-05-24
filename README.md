@@ -101,10 +101,12 @@ The maintenance BLE service is provided implicitly when you include `esp32_ble_c
 Allows to send commands to the ESP32 and receives answers back from it. A command is a string which consists of the name of the command and (possibly) arguments, separated by spaces.
 You can define your own custom commands in yaml as described below in detail.
 There are also some built-in commands, which are always available:
-  * help [command]:
+  * help [&lt;command>]:
     Without argument, it lists all available commands. When the name of a command is given like in "help log-level" it displays a specific description for this command.
   * ble-services [on|off]:
-    Switches the component related (non-maintenance) BLE services on or off. You may wonder why one should switch off these services. On most ESP32 boards both BLE and WiFi share the same physical 2,4 GHz antenna on the ESP32. So, too much traffic on both of them can cause it to crash and reboot. Short-lived WiFi connections for sending MQTT messages work fine with services enabled. However, when connecting to the [web server](https://esphome.io/components/web_server.html) or for [OTA updates](https://esphome.io/components/ota.html) services should be disabled. 
+    Switches the component related (non-maintenance) BLE services on or off. You may wonder why one should switch off these services. On most ESP32 boards both BLE and WiFi share the same physical 2,4 GHz antenna on the ESP32. So, too much traffic on both of them can cause it to crash and reboot. Short-lived WiFi connections for sending MQTT messages work fine with services enabled. However, when connecting to the [web server](https://esphome.io/components/web_server.html) or for [OTA updates](https://esphome.io/components/ota.html) services should be disabled.
+  * wifi-config &lt;ssid> &lt;password> [hidden]:
+    Sets the SSID and the password to use for connecting to WIFI. The optional 'hidden' argument marks the network as hidden network. It is recommended to use this command only when security is enabled.
   * log-level [level]: 
     If no argument is provided, it queries the current log level for logging over BLE. When a level argument is provided like in "log-level 0" the log level is adjusted. Currently the levels have to be specified as integer number between 0 (= no logging) and 7 (= very verbose).  
       ⚠️ **Note**: You cannot get finer logging than the overall log level specified for the [logger component](https://esphome.io/components/logger.html).

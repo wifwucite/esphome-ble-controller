@@ -6,9 +6,17 @@
 namespace esphome {
 namespace esp32_ble_controller {
 
+static const char *TAG = "ble_command";
+
+// generic ///////////////////////////////////////////////////////////////////////////////////////////////
+
+void BLECommand::set_result(const string& result) const {
+  global_ble_controller->set_command_result(result);
+}
+
 // help ///////////////////////////////////////////////////////////////////////////////////////////////
 
-BLECommandHelp::BLECommandHelp() : BLECommand("help", "show help for commands") {}
+BLECommandHelp::BLECommandHelp() : BLECommand("help", "shows help for commands.") {}
 
 void BLECommandHelp::execute(const vector<string>& arguments) const {
   if (arguments.empty()) {
@@ -18,26 +26,26 @@ void BLECommandHelp::execute(const vector<string>& arguments) const {
       help += command->get_name();
     }
     help += ", 'help <cmd>' for more.";
-    global_ble_controller->set_command_result(help);
+    set_result(help);
   } else {
     string command_name = arguments[0];
     for (const auto& command : global_ble_controller->get_commands()) {
       if (command->get_name() == command_name) {
-        global_ble_controller->set_command_result(command->get_name() + ": " + command->get_description());
+        set_result(command->get_name() + ": " + command->get_description());
         return;
       }
-      global_ble_controller->set_command_result("Unknown BLE command '" + command_name + "'");
+      set_result("Unknown BLE command '" + command_name + "'");
     }
   }
 }
 
 // ble-services ///////////////////////////////////////////////////////////////////////////////////////////////
 
-BLECommandSwitchServicesOnOrOff::BLECommandSwitchServicesOnOrOff() : BLECommand("ble-services", "ble-services on|off enables or disables the non-maintenance BLE services") {}
+BLECommandSwitchServicesOnOrOff::BLECommandSwitchServicesOnOrOff() : BLECommand("ble-services", "'ble-services on|off' enables or disables the non-maintenance BLE services.") {}
 
 void BLECommandSwitchServicesOnOrOff::execute(const vector<string>& arguments) const {
   if (!arguments.empty()) {
-    string on_or_off = arguments[0];
+    const string& on_or_off = arguments[0];
     if (on_or_off == "off") {
       global_ble_controller->set_ble_mode(BLEMaintenanceMode::WIFI_ONLY);
     } else {
@@ -46,13 +54,30 @@ void BLECommandSwitchServicesOnOrOff::execute(const vector<string>& arguments) c
   }
   BLEMaintenanceMode mode = global_ble_controller->get_ble_mode();
   string enabled_or_disabled = mode == BLEMaintenanceMode::WIFI_ONLY ? "disabled" : "enabled";
-  global_ble_controller->set_command_result("Non-maintenance services are " + enabled_or_disabled +".");
+  set_result("Non-maintenance services are " + enabled_or_disabled +".");
+}
+
+// wifi-config ///////////////////////////////////////////////////////////////////////////////////////////////
+
+BLECommandWifiConfiguration::BLECommandWifiConfiguration() : BLECommand("wifi-config", "'wifi-config <ssid> <pwd> [hidden]' sets WIFI SSID and password and if it is hidden.") {}
+
+void BLECommandWifiConfiguration::execute(const vector<string>& arguments) const {
+  if (arguments.size() >= 2) {
+    const string& ssid = arguments[0];
+    const string& password = arguments[1];
+    const bool hidden_network = arguments.size() == 3 && arguments[2] == "hidden";
+    global_ble_controller->set_wifi_configuration(ssid, password, hidden_network);
+
+    set_result("WIFI configuration updated.");
+  } else {
+    set_result("At least two arguments (SSID and password) required!");
+  }
 }
 
 // log-level ///////////////////////////////////////////////////////////////////////////////////////////////
 
 #ifdef USE_LOGGER
-BLECommandLogLevel::BLECommandLogLevel() : BLECommand("log-level", "get or set log level (0=None, 4=Config, 5=Debug)") {}
+BLECommandLogLevel::BLECommandLogLevel() : BLECommand("log-level", "gets or sets log level (0=None, 4=Config, 5=Debug).") {}
 
 void BLECommandLogLevel::execute(const vector<string>& arguments) const {
   if (!arguments.empty()) {
@@ -62,7 +87,7 @@ void BLECommandLogLevel::execute(const vector<string>& arguments) const {
       global_ble_controller->set_log_level(level.value());
     }
   }
-  global_ble_controller->set_command_result("Log level is " + to_string(global_ble_controller->get_log_level())+".");
+  set_result("Log level is " + to_string(global_ble_controller->get_log_level())+".");
 }
 #endif
 
@@ -76,7 +101,7 @@ void BLECustomCommand::execute(const vector<string>& arguments) const {
   optional<string> result = result_holder.get_result();
   if (result.has_value()) {
     ESP_LOGI(TAG, "Setting result %s", result.value().c_str());
-    global_ble_controller->set_command_result(result.value());
+    set_result(result.value());
   }
 }
 

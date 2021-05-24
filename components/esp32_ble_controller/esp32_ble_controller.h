@@ -14,6 +14,7 @@
 #include "ble_component_handler_base.h"
 #include "ble_maintenance_handler.h"
 #include "thread_safe_bounded_queue.h"
+#include "wifi_configuration_handler.h"
 
 using std::string;
 using std::unordered_map;
@@ -61,6 +62,8 @@ public:
   inline BLEMaintenanceMode get_ble_mode() const { return ble_mode; }
   void set_ble_mode(BLEMaintenanceMode mode);
   void set_ble_mode(uint8_t mode);
+
+  void set_wifi_configuration(const string& ssid, const string& password, bool hidden_network);
 
   void set_command_result(const string& result_message);
 
@@ -127,6 +130,8 @@ private:
   bool security_enabled{true};
 
   BLEMaintenanceHandler* maintenance_handler;
+
+  WifiSettingsHandler wifi_configuration_handler;
 
   unordered_map<string, BLECharacteristicInfoForHandler> info_for_component;
   unordered_map<string, BLEComponentHandlerBase*> handler_for_component;
