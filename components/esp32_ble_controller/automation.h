@@ -1,9 +1,13 @@
 #pragma once
 
+#include <memory>
+
 #include "esphome/core/automation.h"
 #include "esphome/core/optional.h"
 
 #include "esp32_ble_controller.h"
+
+using std::shared_ptr;
 
 namespace esphome {
 namespace esp32_ble_controller {
@@ -57,13 +61,11 @@ public:
 class BLECustomCommandResultHolder {
 public:
   BLECustomCommandResultHolder() : result(new optional<string>()) {}
-  BLECustomCommandResultHolder(const BLECustomCommandResultHolder& other) : result(other.result) {}
-  BLECustomCommandResultHolder& operator=(const BLECustomCommandResultHolder& other) { result = other.result; return *this; }
 
   void operator=(const string& new_result) { *result = make_optional(new_result); }
   const optional<string>& get_result() const { return *result; }
 private:
-  optional<string>* result;
+  shared_ptr<optional<string>> result;
 };
 
 /// Trigger that is fired when a custom command is executed.

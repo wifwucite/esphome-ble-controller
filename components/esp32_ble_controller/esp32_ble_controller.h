@@ -64,6 +64,7 @@ public:
   void set_ble_mode(uint8_t mode);
 
   void set_wifi_configuration(const string& ssid, const string& password, bool hidden_network);
+  void clear_wifi_configuration_and_reboot();
 
   void set_command_result(const string& result_message);
 

@@ -4,6 +4,7 @@
 
 #include "esphome/core/defines.h"
 #include "esphome/core/preferences.h"
+#include "esphome/core/optional.h"
 
 namespace esphome {
 namespace esp32_ble_controller {
@@ -22,8 +23,13 @@ public:
   void setup();
 
   void set_credentials(const std::string& ssid, const std::string& password, bool hidden_network);
+  void clear_credentials();
+
+  optional<std::string> get_current_ssid() const;
 
 private:
+  bool load_settings(WifiSettings& settings) const;
+  bool save_settings(const WifiSettings& settings);
   void override_sta(const WifiSettings& settings);
 
 private:

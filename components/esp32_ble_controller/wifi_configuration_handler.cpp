@@ -16,7 +16,7 @@ void WifiSettingsHandler::setup() {
   wifi_settings_preference = global_preferences.make_preference<WifiSettings>(hash, true);
 
   WifiSettings settings;
-  if (wifi_settings_preference.load(&settings)) {
+  if (load_settings(settings)) {
     ESP_LOGI(TAG, "Overriding WIFI settings with stored preferences");
     override_sta(settings);
   }
@@ -31,11 +31,39 @@ void WifiSettingsHandler::set_credentials(const std::string &ssid, const std::st
   strncpy(settings.password, password.c_str(), WIFI_PASSWORD_LEN);
   settings.hidden_network = hidden_network;
 
-  if (!wifi_settings_preference.save(&settings)) {
+  if (!save_settings(settings)) {
     ESP_LOGE(TAG, "Could not save new WIFI settings");
   }
 
   override_sta(settings);
+}
+
+void WifiSettingsHandler::clear_credentials() {
+  ESP_LOGI(TAG, "Clearing WIFI settings");
+    
+  WifiSettings settings;
+  settings.ssid[0] = 0;
+
+  if (!save_settings(settings)) {
+    ESP_LOGE(TAG, "Could not clear WIFI settings");
+  }
+}
+
+optional<std::string> WifiSettingsHandler::get_current_ssid() const {
+  WifiSettings settings;
+  if (load_settings(settings)) {
+    return make_optional<std::string>(settings.ssid);
+  } else {
+    return optional<std::string>();
+  }
+}
+
+bool WifiSettingsHandler::load_settings(WifiSettings& settings) const {
+  return const_cast<WifiSettingsHandler*>(this)->wifi_settings_preference.load(&settings) && strlen(settings.ssid);
+}
+
+bool WifiSettingsHandler::save_settings(const WifiSettings& settings) {
+  return wifi_settings_preference.save(&settings);
 }
 
 void WifiSettingsHandler::override_sta(const WifiSettings& settings) {

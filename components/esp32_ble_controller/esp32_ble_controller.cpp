@@ -231,6 +231,12 @@ void ESP32BLEController::ESP32BLEController::set_wifi_configuration(const string
   wifi_configuration_handler.set_credentials(ssid, password, hidden_network);
 }
 
+void ESP32BLEController::ESP32BLEController::clear_wifi_configuration_and_reboot() {
+  wifi_configuration_handler.clear_credentials();
+
+  App.reboot();
+}
+
 void ESP32BLEController::dump_config() {
   ESP_LOGCONFIG(TAG, "Bluetooth Low Energy Controller:");
   ESP_LOGCONFIG(TAG, "  BLE mode: %d", (uint8_t) ble_mode);

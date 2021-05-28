@@ -67,10 +67,12 @@ void BLECommandWifiConfiguration::execute(const vector<string>& arguments) const
     const string& password = arguments[1];
     const bool hidden_network = arguments.size() == 3 && arguments[2] == "hidden";
     global_ble_controller->set_wifi_configuration(ssid, password, hidden_network);
-
     set_result("WIFI configuration updated.");
+  } else if (arguments.size() == 1 && arguments[0] == "clear") {
+    set_result("WIFI configuration cleared.");
+    global_ble_controller->clear_wifi_configuration_and_reboot();
   } else {
-    set_result("At least two arguments (SSID and password) required!");
+    set_result("Invalid arguments!");
   }
 }
 
