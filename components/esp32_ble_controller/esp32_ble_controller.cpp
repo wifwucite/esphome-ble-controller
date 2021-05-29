@@ -237,6 +237,10 @@ void ESP32BLEController::ESP32BLEController::clear_wifi_configuration_and_reboot
   App.reboot();
 }
 
+const optional<string> ESP32BLEController::ESP32BLEController::get_current_ssid_in_wifi_configuration() {
+  return wifi_configuration_handler.get_current_ssid();
+}
+
 void ESP32BLEController::dump_config() {
   ESP_LOGCONFIG(TAG, "Bluetooth Low Energy Controller:");
   ESP_LOGCONFIG(TAG, "  BLE mode: %d", (uint8_t) ble_mode);

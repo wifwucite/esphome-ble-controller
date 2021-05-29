@@ -65,6 +65,7 @@ public:
 
   void set_wifi_configuration(const string& ssid, const string& password, bool hidden_network);
   void clear_wifi_configuration_and_reboot();
+  const optional<string> get_current_ssid_in_wifi_configuration();
 
   void set_command_result(const string& result_message);
 
@@ -132,7 +133,7 @@ private:
 
   BLEMaintenanceHandler* maintenance_handler;
 
-  WifiSettingsHandler wifi_configuration_handler;
+  WifiConfigurationHandler wifi_configuration_handler;
 
   unordered_map<string, BLECharacteristicInfoForHandler> info_for_component;
   unordered_map<string, BLEComponentHandlerBase*> handler_for_component;

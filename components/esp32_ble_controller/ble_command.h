@@ -19,11 +19,12 @@ public:
   virtual ~BLECommand() {}
 
   const string get_name() const { return name; }
-
   const string get_description() const { return description; }
 
   virtual void execute(const std::vector<string>& arguments) const = 0;
 
+  virtual string get_command_specific_help() const;
+  
 protected:
   void set_result(const string& result) const;
 
@@ -60,6 +61,8 @@ public:
   virtual ~BLECommandWifiConfiguration() {}
 
   virtual void execute(const vector<string>& arguments) const override;
+
+  virtual string get_command_specific_help() const override;
 };
 
 // log-level ///////////////////////////////////////////////////////////////////////////////////////////////
