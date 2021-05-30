@@ -148,10 +148,10 @@ void ESP32BLEController::setup_ble_services_for_components() {
   setup_ble_services_for_components(App.get_binary_sensors(), BLEComponentHandlerFactory::create_binary_sensor_handler);
 #endif
 #ifdef USE_COVER
-  setup_ble_services_for_components(App.get_covers());
+  //setup_ble_services_for_components(App.get_covers());
 #endif
 #ifdef USE_FAN
-  setup_ble_services_for_components(App.get_fans());
+  setup_ble_services_for_components(App.get_fans(), BLEComponentHandlerFactory::create_fan_handler);
 #endif
 #ifdef USE_LIGHT
   setup_ble_services_for_components(App.get_lights());
@@ -166,7 +166,7 @@ void ESP32BLEController::setup_ble_services_for_components() {
   setup_ble_services_for_components(App.get_text_sensors(), BLEComponentHandlerFactory::create_text_sensor_handler);
 #endif
 #ifdef USE_CLIMATE
-  setup_ble_services_for_components(App.get_climates());
+  //setup_ble_services_for_components(App.get_climates());
 #endif
 
   for (auto const& entry : handler_for_component) {

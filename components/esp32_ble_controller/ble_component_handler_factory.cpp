@@ -23,6 +23,9 @@ BLEComponentHandlerBase* esphome::esp32_ble_controller::BLEComponentHandlerFacto
 #endif
 
 #ifdef USE_FAN
+BLEComponentHandlerBase* BLEComponentHandlerFactory::BLEComponentHandlerFactory::create_fan_handler(fan::FanState* component, const BLECharacteristicInfoForHandler& characteristic_info) {
+  return create_component_handler(component, characteristic_info);
+}
 #endif
 
 #ifdef USE_LIGHT
