@@ -126,7 +126,7 @@ void BLECustomCommand::execute(const vector<string>& arguments) const {
 
   optional<string> result = result_holder.get_result();
   if (result.has_value()) {
-    ESP_LOGD(TAG, "Setting result for custom command %s: %s", get_name(), result.value().c_str());
+    ESP_LOGD(TAG, "Setting result for custom command %s: %s", get_name().c_str(), result.value().c_str());
     set_result(result.value());
   }
 }
