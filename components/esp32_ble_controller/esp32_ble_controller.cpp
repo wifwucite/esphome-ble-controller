@@ -266,7 +266,7 @@ void ESP32BLEController::set_command_result(const string& result_message) {
   void ESP32BLEController::on_cover_update(cover::Cover *obj) {}
 #endif
 #ifdef USE_FAN
-  void ESP32BLEController::on_fan_update(fan::FanState *obj) {}
+  void ESP32BLEController::on_fan_update(fan::FanState *fan_state) { update_component_state(fan_state, fan_state->state); }
 #endif
 #ifdef USE_LIGHT
   void ESP32BLEController::on_light_update(light::LightState *obj) {}

@@ -1,6 +1,7 @@
 #include "ble_component_handler_factory.h"
 
 #include "ble_component_handler.h"
+#include "ble_fan_handler.h"
 #include "ble_sensor_handler.h"
 #include "ble_switch_handler.h"
 
@@ -24,7 +25,7 @@ BLEComponentHandlerBase* esphome::esp32_ble_controller::BLEComponentHandlerFacto
 
 #ifdef USE_FAN
 BLEComponentHandlerBase* BLEComponentHandlerFactory::BLEComponentHandlerFactory::create_fan_handler(fan::FanState* component, const BLECharacteristicInfoForHandler& characteristic_info) {
-  return create_component_handler(component, characteristic_info);
+  return new BLEFanHandler(component, characteristic_info);
 }
 #endif
 
