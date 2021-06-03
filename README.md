@@ -140,10 +140,11 @@ esp32_ble_controller:
 
 ### Supported components
 
-* [Binary sensor](https://esphome.io/components/binary_sensor/index.html) (read-only)
-* [Sensor](https://esphome.io/components/sensor/index.html) (read-only)
-* [Text sensor](https://esphome.io/components/text_sensor/index.html) (read-only)
-* [Switch](https://esphome.io/components/switch/index.html) (read-write)
+* [Binary sensor](https://esphome.io/components/binary_sensor/index.html) (read-only, 2-byte unsigned little-endian integer): The characteristic stores the boolean sensor value as integer (0 or 1).
+* [Sensor](https://esphome.io/components/sensor/index.html) (read-only, 4-byte little-endian float): The characteristic stores the floating point sensor value (without unit).
+* [Text sensor](https://esphome.io/components/text_sensor/index.html) (read-only, UTF-8 string): The characteristic stores the string sensor value.
+* [Switch](https://esphome.io/components/switch/index.html) (read-write, 2-byte unsigned little-endian integer): The characteristic represents the on-off state of the switch as integer value (0 or 1). Writing a 0 or 1 can be used to turn the switch on or off.
+* [Fan](https://esphome.io/components/fan/index.html) (read-write, 2-byte unsigned little-endian integer): The characteristic represents the on-off state of the fan as integer value (0 or 1). Writing a 0 or 1 can be used to turn the fan on or off.
 
 # Examples
 
