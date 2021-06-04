@@ -68,6 +68,8 @@ void ESP32BLEController::setup() {
 
   initialize_ble_mode();
 
+  wifi_configuration_handler.setup();
+
   if (!setup_ble()) {
     return;
   }
@@ -81,13 +83,9 @@ void ESP32BLEController::setup() {
   // Create the BLE Device
   BLEDevice::init(App.get_name());
 
+  configure_ble_security();
+
   setup_ble_server_and_services();
-
-  setup_controller();
-
-  enable_ble_security();
-
-  wifi_configuration_handler.setup();
 
   // Start advertising
   // BLEAdvertising* advertising = BLEDevice::getAdvertising();
@@ -154,7 +152,7 @@ void ESP32BLEController::setup_ble_services_for_components() {
   setup_ble_services_for_components(App.get_fans(), BLEComponentHandlerFactory::create_fan_handler);
 #endif
 #ifdef USE_LIGHT
-  setup_ble_services_for_components(App.get_lights());
+  //setup_ble_services_for_components(App.get_lights());
 #endif
 #ifdef USE_SENSOR
   setup_ble_services_for_components(App.get_sensors(), BLEComponentHandlerFactory::create_sensor_handler);
@@ -170,8 +168,11 @@ void ESP32BLEController::setup_ble_services_for_components() {
 #endif
 
   for (auto const& entry : handler_for_component) {
-    entry.second->setup(ble_server);
+    auto* handler = entry.second;
+    handler->setup(ble_server);
   }
+
+  register_state_change_callbacks_and_send_initial_states();
 }
 
 template <typename C> 
@@ -187,9 +188,77 @@ void ESP32BLEController::setup_ble_service_for_component(C* component, BLECompon
 
   auto object_id = component->get_object_id();
   if (info_for_component.count(object_id)) {
-    auto info = info_for_component[object_id];
-    handler_for_component[object_id] = handler_creator(component, info);
+    if (component->is_internal()) {
+      ESP_LOGW(TAG, "Component %s is internal and will not be available via BLE.", component->get_name().c_str());
+    } else {
+      auto info = info_for_component[object_id];
+      handler_for_component[object_id] = handler_creator(component, info);
+    }
   }
+}
+
+void ESP32BLEController::register_state_change_callbacks_and_send_initial_states() {
+#ifdef USE_BINARY_SENSOR
+  for (auto *obj : App.get_binary_sensors()) {
+    if (info_for_component.count(obj->get_object_id())) {
+      obj->add_on_state_callback([this, obj](bool state) { this->on_binary_sensor_update(obj, state); });
+      if (obj->has_state())
+        update_component_state(obj, obj->state);
+    }
+  }
+#endif
+#ifdef USE_CLIMATE
+  // for (auto *obj : App.get_climates()) {
+  //   if (info_for_component.count(obj->get_object_id()))
+  //     obj->add_on_state_callback([this, obj]() { this->on_climate_update(obj); });
+  // }
+#endif
+#ifdef USE_COVER
+  // for (auto *obj : App.get_covers()) {
+  //   if (info_for_component.count(obj->get_object_id()))
+  //     obj->add_on_state_callback([this, obj]() { this->on_cover_update(obj); });
+  // }
+#endif
+#ifdef USE_FAN
+  for (auto *obj : App.get_fans()) {
+    if (info_for_component.count(obj->get_object_id())) {
+      obj->add_on_state_callback([this, obj]() { this->on_fan_update(obj); });
+      update_component_state(obj, obj->state);
+    }
+  }
+#endif
+#ifdef USE_LIGHT
+  // for (auto *obj : App.get_lights()) {
+  //   if (info_for_component.count(obj->get_object_id()))
+  //     obj->add_new_remote_values_callback([this, obj]() { this->on_light_update(obj); });
+  // }
+#endif
+#ifdef USE_SENSOR
+  for (auto *obj : App.get_sensors()) {
+    if (info_for_component.count(obj->get_object_id())) {
+      obj->add_on_state_callback([this, obj](float state) { this->on_sensor_update(obj, state); });
+      if (obj->has_state())
+        update_component_state(obj, obj->state);
+    }
+  }
+#endif
+#ifdef USE_SWITCH
+  for (auto *obj : App.get_switches()) {
+    if (info_for_component.count(obj->get_object_id())) {
+      obj->add_on_state_callback([this, obj](bool state) { this->on_switch_update(obj, state); });
+      update_component_state(obj, obj->state);
+    }
+  }
+#endif
+#ifdef USE_TEXT_SENSOR
+  for (auto *obj : App.get_text_sensors()) {
+    if (info_for_component.count(obj->get_object_id())) {
+      obj->add_on_state_callback([this, obj](std::string state) { this->on_text_sensor_update(obj, state); });
+      if (obj->has_state())
+        update_component_state(obj, obj->state);
+    }
+  }
+#endif
 }
 
 void ESP32BLEController::initialize_ble_mode() {
@@ -226,6 +295,19 @@ void ESP32BLEController::set_ble_mode(uint8_t newMode) {
   }
 }
 
+void ESP32BLEController::dump_config() {
+  ESP_LOGCONFIG(TAG, "Bluetooth Low Energy Controller:");
+  ESP_LOGCONFIG(TAG, "  BLE mode: %d", (uint8_t) ble_mode);
+
+  if (get_security_enabled()) {
+    ESP_LOGCONFIG(TAG, "  security enabled");
+    show_bonded_devices();
+  } else {
+    ESP_LOGCONFIG(TAG, "  security disabled");
+  }
+}
+
+/// run ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void ESP32BLEController::ESP32BLEController::set_wifi_configuration(const string& ssid, const string& password, bool hidden_network) {
   wifi_configuration_handler.set_credentials(ssid, password, hidden_network);
@@ -240,20 +322,6 @@ void ESP32BLEController::ESP32BLEController::clear_wifi_configuration_and_reboot
 const optional<string> ESP32BLEController::ESP32BLEController::get_current_ssid_in_wifi_configuration() {
   return wifi_configuration_handler.get_current_ssid();
 }
-
-void ESP32BLEController::dump_config() {
-  ESP_LOGCONFIG(TAG, "Bluetooth Low Energy Controller:");
-  ESP_LOGCONFIG(TAG, "  BLE mode: %d", (uint8_t) ble_mode);
-
-  if (get_security_enabled()) {
-    ESP_LOGCONFIG(TAG, "  security enabled");
-    show_bonded_devices();
-  } else {
-    ESP_LOGCONFIG(TAG, "  security disabled");
-  }
-}
-
-/// run ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void ESP32BLEController::set_command_result(const string& result_message) {
   maintenance_handler->set_command_result(result_message);
@@ -309,7 +377,7 @@ void ESP32BLEController::loop() {
   }
 }
 
-void ESP32BLEController::enable_ble_security() {
+void ESP32BLEController::configure_ble_security() {
   if (!get_security_enabled()) {
     return;
   }

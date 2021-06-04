@@ -28,15 +28,17 @@ class BLEControllerCustomCommandExecutionTrigger;
 /**
  * Bluetooth Low Energy controller for ESP32.
  * It provides a BLE server that can BLE clients like mobile phones can connect to and access components (like reading sensor values and control switches).
- * In addition it provides maintenance feature like a BLE mode and logging over BLE.
+ * In addition it provides maintenance features like a BLE commands and logging over BLE.
  * <para>
- * Besides the generic maintenance, this controller only exposes components over BLE that have been registered before (i.e. configured explicitly in the yaml configuration).
+ * Besides the generic maintenance service, this controller only exposes components over BLE that have been registered before (i.e. configured explicitly in the yaml configuration).
  * @brief BLE controller for ESP32
  */
-class ESP32BLEController : public Component, public Controller, private BLESecurityCallbacks, private BLEServerCallbacks {
+class ESP32BLEController : public Component, private BLESecurityCallbacks, private BLEServerCallbacks {
 public:
   ESP32BLEController();
   virtual ~ESP32BLEController() {}
+
+  // pre-setup configurations
 
   void register_component(Nameable* component, const string& service_UUID, const string& characteristic_UUID, bool use_BLE2902 = true);
 
@@ -51,11 +53,15 @@ public:
   void set_security_enabled(bool enabled);
   inline bool get_security_enabled() const { return security_enabled; }
 
+  // setup
+
   float get_setup_priority() const override { return setup_priority::PROCESSOR; }
 
   void setup() override;
 
   void dump_config() override;
+
+  // run
 
   void loop() override;
 
@@ -63,42 +69,16 @@ public:
   void set_ble_mode(BLEMaintenanceMode mode);
   void set_ble_mode(uint8_t mode);
 
-  void set_wifi_configuration(const string& ssid, const string& password, bool hidden_network);
-  void clear_wifi_configuration_and_reboot();
-  const optional<string> get_current_ssid_in_wifi_configuration();
-
-  void set_command_result(const string& result_message);
-
 #ifdef USE_LOGGER
   int get_log_level() { return maintenance_handler->get_log_level(); }
   void set_log_level(int level) { maintenance_handler->set_log_level(level); }
 #endif
 
-  // Controller methods:
-#ifdef USE_BINARY_SENSOR
-  void on_binary_sensor_update(binary_sensor::BinarySensor *obj, bool state) override;
-#endif
-#ifdef USE_COVER
-  void on_cover_update(cover::Cover *obj) override;
-#endif
-#ifdef USE_FAN
-  void on_fan_update(fan::FanState *obj) override;
-#endif
-#ifdef USE_LIGHT
-  void on_light_update(light::LightState *obj) override;
-#endif
-#ifdef USE_SENSOR
-  void on_sensor_update(sensor::Sensor *obj, float state) override;
-#endif
-#ifdef USE_SWITCH
-  void on_switch_update(switch_::Switch *obj, bool state) override;
-#endif
-#ifdef USE_TEXT_SENSOR
-  void on_text_sensor_update(text_sensor::TextSensor *obj, std::string state) override;
-#endif
-#ifdef USE_CLIMATE
-  void on_climate_update(climate::Climate *obj) override;
-#endif
+  void set_wifi_configuration(const string& ssid, const string& password, bool hidden_network);
+  void clear_wifi_configuration_and_reboot();
+  const optional<string> get_current_ssid_in_wifi_configuration();
+
+  void set_command_result(const string& result_message);
 
   /// Executes a given function in the main loop of the app. (Can be called from another RTOS task.)
   void execute_in_loop(std::function<void()>&& deferred_function);
@@ -113,7 +93,34 @@ private:
   template <typename C> void setup_ble_service_for_component(C* component, BLEComponentHandlerBase* (*handler_creator)(C*, const BLECharacteristicInfoForHandler&));
   template <typename C, typename S> void update_component_state(C* component, S state);
 
-  void enable_ble_security();
+  // Controller methods:
+  void register_state_change_callbacks_and_send_initial_states();
+#ifdef USE_BINARY_SENSOR
+  void on_binary_sensor_update(binary_sensor::BinarySensor *obj, bool state);
+#endif
+#ifdef USE_FAN
+  void on_fan_update(fan::FanState *obj);
+#endif
+#ifdef USE_LIGHT
+  void on_light_update(light::LightState *obj);
+#endif
+#ifdef USE_SENSOR
+  void on_sensor_update(sensor::Sensor *obj, float state);
+#endif
+#ifdef USE_SWITCH
+  void on_switch_update(switch_::Switch *obj, bool state);
+#endif
+#ifdef USE_COVER
+  void on_cover_update(cover::Cover *obj);
+#endif
+#ifdef USE_TEXT_SENSOR
+  void on_text_sensor_update(text_sensor::TextSensor *obj, std::string state);
+#endif
+#ifdef USE_CLIMATE
+  void on_climate_update(climate::Climate *obj);
+#endif
+
+  void configure_ble_security();
   virtual uint32_t onPassKeyRequest(); // inherited from BLESecurityCallbacks
   virtual void onPassKeyNotify(uint32_t pass_key); // inherited from BLESecurityCallbacks
   virtual bool onSecurityRequest(); // inherited from BLESecurityCallbacks
