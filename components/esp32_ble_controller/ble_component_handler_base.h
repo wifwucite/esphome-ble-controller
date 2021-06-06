@@ -35,9 +35,9 @@ public:
 
   void setup(BLEServer* ble_server);
 
-  void send_value(float value);
-  void send_value(string value);
-  void send_value(bool value);
+  virtual void send_value(float value);
+  virtual void send_value(string value);
+  virtual void send_value(bool value);
 
 protected:
   virtual Nameable* get_component() { return component; }

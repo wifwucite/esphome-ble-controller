@@ -24,6 +24,8 @@ public:
   BLEFanHandler(FanState* component, const BLECharacteristicInfoForHandler& characteristic_info) : BLEComponentHandler(component, characteristic_info) {}
   virtual ~BLEFanHandler() {}
 
+  virtual void send_value(bool value) override;
+
 protected:
   virtual bool can_receive_writes() { return true; }
   virtual void on_characteristic_written() override;
