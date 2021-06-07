@@ -316,7 +316,7 @@ void ESP32BLEController::ESP32BLEController::set_wifi_configuration(const string
 void ESP32BLEController::ESP32BLEController::clear_wifi_configuration_and_reboot() {
   wifi_configuration_handler.clear_credentials();
 
-  App.reboot();
+  App.safe_reboot();
 }
 
 const optional<string> ESP32BLEController::ESP32BLEController::get_current_ssid_in_wifi_configuration() {
