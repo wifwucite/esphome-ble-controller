@@ -2,9 +2,11 @@ import re
 
 import esphome.codegen as cg
 import esphome.config_validation as cv
-from esphome.const import CONF_ID, CONF_TRIGGER_ID
+from esphome.automation import LambdaAction
+from esphome.const import CONF_ID, CONF_TRIGGER_ID, CONF_FORMAT, CONF_ARGS
 from esphome import automation
-from esphome.core import coroutine
+from esphome.core import coroutine, Lambda
+from esphome.cpp_generator import MockObj
 
 CODEOWNERS = ['@wifwucite']
 
@@ -190,3 +192,57 @@ def to_code(config):
     for conf in config.get(CONF_ON_SERVER_DISCONNECTED, []):
         trigger = cg.new_Pvariable(conf[CONF_TRIGGER_ID], var)
         yield automation.build_automation(trigger, [], conf)
+
+### Automation: ble_cmd.set_result ###
+
+def maybe_simple_message(schema):
+    def validator(value):
+        if isinstance(value, dict):
+            return cv.Schema(schema)(value)
+        return cv.Schema(schema)({CONF_FORMAT: value})
+
+    return validator
+
+def validate_printf(value):
+    # https://stackoverflow.com/questions/30011379/how-can-i-parse-a-c-format-string-in-python
+    # pylint: disable=anomalous-backslash-in-string
+    cfmt = """\
+    (                                  # start of capture group 1
+    %                                  # literal "%"
+    (?:[-+0 #]{0,5})                   # optional flags
+    (?:\d+|\*)?                        # width
+    (?:\.(?:\d+|\*))?                  # precision
+    (?:h|l|ll|w|I|I32|I64)?            # size
+    [cCdiouxXeEfgGaAnpsSZ]             # type
+    ) 
+    """  # noqa
+    matches = re.findall(cfmt, value[CONF_FORMAT], flags=re.X)
+    if len(matches) != len(value[CONF_ARGS]):
+        raise cv.Invalid(
+            "Found {} printf-patterns ({}), but {} args were given!"
+            "".format(len(matches), ", ".join(matches), len(value[CONF_ARGS]))
+        )
+    return value
+
+CONF_AUTO_BLE_CMD_SET_RESULT = "ble_cmd.set_result"
+AUTO_BLE_CMD_SET_RESULT_SCHEMA = cv.All(
+    maybe_simple_message(
+        {
+            cv.Required(CONF_FORMAT): cv.string,
+            cv.Optional(CONF_ARGS, default=list): cv.ensure_list(cv.lambda_),
+
+        }
+    ),
+    validate_printf,
+)
+
+GLOBAL_BLE_CONTROLLER_VAR = MockObj(esp32_ble_controller_ns.global_ble_controller, "->")
+
+@automation.register_action(CONF_AUTO_BLE_CMD_SET_RESULT, LambdaAction, AUTO_BLE_CMD_SET_RESULT_SCHEMA)
+async def logger_log_action_to_code(config, action_id, template_arg, args):
+    args_ = [cg.RawExpression(str(x)) for x in config[CONF_ARGS]]
+
+    text = str(cg.statement(GLOBAL_BLE_CONTROLLER_VAR.set_command_result(config[CONF_FORMAT], *args_)))
+
+    lambda_ = await cg.process_lambda(Lambda(text), args, return_type=cg.void)
+    return cg.new_Pvariable(action_id, template_arg, lambda_)

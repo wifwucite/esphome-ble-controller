@@ -327,6 +327,16 @@ void ESP32BLEController::set_command_result(const string& result_message) {
   maintenance_handler->set_command_result(result_message);
 }
 
+void ESP32BLEController::set_command_result(const char* format, ...) {
+  char buffer[128];
+  va_list arg;
+  va_start(arg, format);
+  vsnprintf(buffer, sizeof(buffer), format, arg);
+  va_end(arg);
+  
+  maintenance_handler->set_command_result(buffer);
+}
+
 #ifdef USE_BINARY_SENSOR
   void ESP32BLEController::on_binary_sensor_update(binary_sensor::BinarySensor *obj, bool state) { update_component_state(obj, state); }
 #endif
