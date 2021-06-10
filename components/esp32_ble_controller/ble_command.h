@@ -65,6 +65,26 @@ public:
   virtual string get_command_specific_help() const override;
 };
 
+// pairings ///////////////////////////////////////////////////////////////////////////////////////////////
+
+class BLECommandPairings : public BLECommand {
+public:
+  BLECommandPairings();
+  virtual ~BLECommandPairings() {}
+
+  virtual void execute(const vector<string>& arguments) const override;
+};
+
+// version ///////////////////////////////////////////////////////////////////////////////////////////////
+
+class BLECommandVersion : public BLECommand {
+public:
+  BLECommandVersion();
+  virtual ~BLECommandVersion() {}
+
+  virtual void execute(const vector<string>& arguments) const override;
+};
+
 // log-level ///////////////////////////////////////////////////////////////////////////////////////////////
 
 #ifdef USE_LOGGER

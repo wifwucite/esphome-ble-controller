@@ -51,7 +51,7 @@ CONF_BLE_CMD_DESCRIPTION = "description"
 CONF_BLE_CMD_ON_EXECUTE = "on_execute"
 BLEControllerCustomCommandExecutionTrigger = esp32_ble_controller_ns.class_('BLEControllerCustomCommandExecutionTrigger', automation.Trigger.template())
 
-BUILTIN_CMD_IDS = ['help', 'ble-services', 'wifi-config', 'log-level']
+BUILTIN_CMD_IDS = ['help', 'ble-services', 'wifi-config', 'pairings', 'version', 'log-level']
 CMD_ID_CHARACTERS = "abcdefghijklmnopqrstuvwxyz0123456789-"
 def validate_command_id(value):
     """Validate that this value is a valid command id.

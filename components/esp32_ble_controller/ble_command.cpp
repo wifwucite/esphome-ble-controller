@@ -1,7 +1,10 @@
 #include "ble_command.h"
 
+#include "esphome/core/application.h"
+
 #include "esp32_ble_controller.h"
 #include "automation.h"
+#include "ble_utils.h"
 
 namespace esphome {
 namespace esp32_ble_controller {
@@ -94,6 +97,40 @@ string BLECommandWifiConfiguration::get_command_specific_help() const {
     } else {
       return "'wifi-config <ssid> <pwd> [hidden]' sets WIFI SSID and password and if the network is hidden.";
     }
+}
+
+// pairings ///////////////////////////////////////////////////////////////////////////////////////////////
+
+BLECommandPairings::BLECommandPairings() : BLECommand("pairings", "'pairings [clear]' displays or clears the paired devices.") {}
+
+void BLECommandPairings::execute(const vector<string>& arguments) const {
+  if (!arguments.empty()) {
+    if (arguments[0] == "clear") {
+      remove_all_paired_devices();
+      set_result("Pairings cleared.");
+      return;
+    }
+  }
+  
+  vector<string> paired_devices = get_paired_devices();
+  if (paired_devices.empty()) {
+    set_result("No paired devices.");
+  } else {
+    string paired_devices_listing = "Paired devices:";
+    for (const string& paired_device : paired_devices) {
+      paired_devices_listing += " ";
+      paired_devices_listing += paired_device;
+    } 
+    set_result(paired_devices_listing +".");
+  }
+}
+
+// version ///////////////////////////////////////////////////////////////////////////////////////////////
+
+BLECommandVersion::BLECommandVersion() : BLECommand("version", "displays the current version, i.e. compile time.") {}
+
+void BLECommandVersion::execute(const vector<string>& arguments) const {
+  set_result("Version: " + App.get_compilation_time());
 }
 
 // log-level ///////////////////////////////////////////////////////////////////////////////////////////////

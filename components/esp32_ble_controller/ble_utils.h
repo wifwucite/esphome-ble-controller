@@ -11,8 +11,8 @@ using std::vector;
 namespace esphome {
 namespace esp32_ble_controller {
 
-void show_bonded_devices();
-void remove_all_bonded_devices();
+vector<string> get_paired_devices();
+void remove_all_paired_devices();
 
 BLECharacteristic* create_read_only_ble_characteristic(BLEService* service, const string& characteristic_uuid, const string& description, bool with2902 = true);
 

@@ -11,33 +11,37 @@ namespace esp32_ble_controller {
 
 static const char *TAG = "ble_utils";
 
-void show_bonded_devices()
-{
-    int dev_num = esp_ble_get_bond_device_num();
+vector<string> get_paired_devices() {
+  vector<string> paired_devices;
 
-    esp_ble_bond_dev_t *dev_list = (esp_ble_bond_dev_t*) malloc(sizeof(esp_ble_bond_dev_t) * dev_num);
-    esp_ble_get_bond_device_list(&dev_num, dev_list);
+  int dev_num = esp_ble_get_bond_device_num();
 
-    ESP_LOGI(TAG, "Bonded BLE devices (%d):", dev_num);
-    for (int i = 0; i < dev_num; i++) {
-      esp_bd_addr_t& bd_address = dev_list[i].bd_addr;
-      ESP_LOGI(TAG, "%d) BD address %X:%X:%X:%X:%X:%X", i+1, bd_address[0], bd_address[1], bd_address[2], bd_address[3], bd_address[4], bd_address[5]);
-    }
+  esp_ble_bond_dev_t *dev_list = (esp_ble_bond_dev_t*) malloc(sizeof(esp_ble_bond_dev_t) * dev_num);
+  esp_ble_get_bond_device_list(&dev_num, dev_list);
 
-    free(dev_list);
+  for (int i = 0; i < dev_num; i++) {
+    char bd_address_str[18];
+    esp_bd_addr_t& bd_address = dev_list[i].bd_addr;
+    snprintf(bd_address_str, sizeof(bd_address_str), "%X:%X:%X:%X:%X:%X", bd_address[0], bd_address[1], bd_address[2], bd_address[3], bd_address[4], bd_address[5]);
+    paired_devices.push_back(bd_address_str);
+  }
+
+  free(dev_list);
+
+  return paired_devices;
 }
 
-void remove_all_bonded_devices()
+void remove_all_paired_devices()
 {
-    int dev_num = esp_ble_get_bond_device_num();
+  int dev_num = esp_ble_get_bond_device_num();
 
-    esp_ble_bond_dev_t *dev_list = (esp_ble_bond_dev_t*) malloc(sizeof(esp_ble_bond_dev_t) * dev_num);
-    esp_ble_get_bond_device_list(&dev_num, dev_list);
-    for (int i = 0; i < dev_num; i++) {
-        esp_ble_remove_bond_device(dev_list[i].bd_addr);
-    }
+  esp_ble_bond_dev_t *dev_list = (esp_ble_bond_dev_t*) malloc(sizeof(esp_ble_bond_dev_t) * dev_num);
+  esp_ble_get_bond_device_list(&dev_num, dev_list);
+  for (int i = 0; i < dev_num; i++) {
+      esp_ble_remove_bond_device(dev_list[i].bd_addr);
+  }
 
-    free(dev_list);
+  free(dev_list);
 }
 
 BLECharacteristic* create_ble_characteristic(BLEService* service, const string& characteristic_uuid, uint32_t properties, BLECharacteristicCallbacks* callbacks, const string& description, bool with2902) {

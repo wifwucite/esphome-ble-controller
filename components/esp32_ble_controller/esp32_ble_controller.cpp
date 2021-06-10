@@ -301,7 +301,17 @@ void ESP32BLEController::dump_config() {
 
   if (get_security_enabled()) {
     ESP_LOGCONFIG(TAG, "  security enabled");
-    show_bonded_devices();
+
+    vector<string> paired_devices = get_paired_devices();
+    if (paired_devices.empty()) {
+      ESP_LOGCONFIG(TAG, "  no paired BLE devices");
+    } else {
+      ESP_LOGCONFIG(TAG, "  paired BLE devices (%d):", paired_devices.size());
+      int i = 0;
+      for (const auto& bd_address : paired_devices) {
+        ESP_LOGCONFIG(TAG, "    %d) BD address %s", ++i, bd_address.c_str());
+      }
+    }
   } else {
     ESP_LOGCONFIG(TAG, "  security disabled");
   }
@@ -393,8 +403,6 @@ void ESP32BLEController::configure_ble_security() {
   }
 
   ESP_LOGD(TAG, "  Setting up BLE security");
-
-  //remove_all_bonded_devices();
 
   BLEDevice::setEncryptionLevel(ESP_BLE_SEC_ENCRYPT_MITM);
   BLEDevice::setSecurityCallbacks(this);

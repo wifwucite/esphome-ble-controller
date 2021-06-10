@@ -27,6 +27,8 @@ BLEMaintenanceHandler::BLEMaintenanceHandler() {
   commands.push_back(new BLECommandHelp());
   commands.push_back(new BLECommandSwitchServicesOnOrOff());
   commands.push_back(new BLECommandWifiConfiguration());
+  commands.push_back(new BLECommandPairings());
+  commands.push_back(new BLECommandVersion());
 
 #ifdef USE_LOGGER
   commands.push_back(new BLECommandLogLevel());
