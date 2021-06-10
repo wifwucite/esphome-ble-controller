@@ -58,18 +58,13 @@ public:
 
 // custom command execution ///////////////////////////////////////////////////////////////////////////////////////////////
 
-class BLECustomCommandResultHolder {
+class BLECustomCommandResultSender {
 public:
-  BLECustomCommandResultHolder() : result(new optional<string>()) {}
-
-  void operator=(const string& new_result) { *result = make_optional(new_result); }
-  const optional<string>& get_result() const { return *result; }
-private:
-  shared_ptr<optional<string>> result;
+  void operator=(const string& result) { global_ble_controller->send_command_result(result); }
 };
 
 /// Trigger that is fired when a custom command is executed.
-class BLEControllerCustomCommandExecutionTrigger : public Trigger<std::vector<std::string>, BLECustomCommandResultHolder> {
+class BLEControllerCustomCommandExecutionTrigger : public Trigger<std::vector<std::string>, BLECustomCommandResultSender> {
 public:
   BLEControllerCustomCommandExecutionTrigger(ESP32BLEController* controller) {}
 };

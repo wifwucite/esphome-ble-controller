@@ -78,8 +78,8 @@ public:
   void clear_wifi_configuration_and_reboot();
   const optional<string> get_current_ssid_in_wifi_configuration();
 
-  void set_command_result(const string& result_message);
-  void set_command_result(const char* result_msg_format, ...);
+  void send_command_result(const string& result_message);
+  void send_command_result(const char* result_msg_format, ...);
 
   /// Executes a given function in the main loop of the app. (Can be called from another RTOS task.)
   void execute_in_loop(std::function<void()>&& deferred_function);

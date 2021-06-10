@@ -34,7 +34,7 @@ public:
 
   void add_command(BLECommand* command) { commands.push_back(command); }
   const vector<BLECommand*>& get_commands() const { return commands; }
-  void set_command_result(const string& result_message);
+  void send_command_result(const string& result_message);
 
   void set_ble_mode(BLEMaintenanceMode mode);
 

@@ -158,7 +158,7 @@ def to_code_command(ble_controller_var, cmd):
     description = cmd[CONF_BLE_CMD_DESCRIPTION]
     trigger_conf = cmd[CONF_BLE_CMD_ON_EXECUTE][0]
     trigger = cg.new_Pvariable(trigger_conf[CONF_TRIGGER_ID], ble_controller_var)
-    yield automation.build_automation(trigger, [(cg.std_ns.class_("vector<std::string>"), 'arguments'), (esp32_ble_controller_ns.class_("BLECustomCommandResultHolder"), 'result')], trigger_conf)
+    yield automation.build_automation(trigger, [(cg.std_ns.class_("vector<std::string>"), 'arguments'), (esp32_ble_controller_ns.class_("BLECustomCommandResultSender"), 'result')], trigger_conf)
     cg.add(ble_controller_var.register_command(id, description, trigger))
 
 def to_code(config):
@@ -224,7 +224,7 @@ def validate_printf(value):
         )
     return value
 
-CONF_AUTO_BLE_CMD_SET_RESULT = "ble_cmd.set_result"
+CONF_AUTO_BLE_CMD_SET_RESULT = "ble_cmd.send_result"
 AUTO_BLE_CMD_SET_RESULT_SCHEMA = cv.All(
     maybe_simple_message(
         {
@@ -242,7 +242,7 @@ GLOBAL_BLE_CONTROLLER_VAR = MockObj(esp32_ble_controller_ns.global_ble_controlle
 async def logger_log_action_to_code(config, action_id, template_arg, args):
     args_ = [cg.RawExpression(str(x)) for x in config[CONF_ARGS]]
 
-    text = str(cg.statement(GLOBAL_BLE_CONTROLLER_VAR.set_command_result(config[CONF_FORMAT], *args_)))
+    text = str(cg.statement(GLOBAL_BLE_CONTROLLER_VAR.send_command_result(config[CONF_FORMAT], *args_)))
 
     lambda_ = await cg.process_lambda(Lambda(text), args, return_type=cg.void)
     return cg.new_Pvariable(action_id, template_arg, lambda_)

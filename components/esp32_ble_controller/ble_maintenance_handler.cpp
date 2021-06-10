@@ -85,11 +85,11 @@ void BLEMaintenanceHandler::on_command_written() {
         return;
       }
     }
-    set_command_result("Unkown command '" + command_name + "', try 'help'.");
+    send_command_result("Unkown command '" + command_name + "', try 'help'.");
   }
 }
 
-void BLEMaintenanceHandler::set_command_result(const string& result_message) {
+void BLEMaintenanceHandler::send_command_result(const string& result_message) {
   global_ble_controller->execute_in_loop([this, result_message] { 
      ble_command_characteristic->setValue(result_message);
   });

@@ -11,7 +11,7 @@ static const char *TAG = "ble_command";
 // generic ///////////////////////////////////////////////////////////////////////////////////////////////
 
 void BLECommand::set_result(const string& result) const {
-  global_ble_controller->set_command_result(result);
+  global_ble_controller->send_command_result(result);
 }
 
 string BLECommand::get_command_specific_help() const {
@@ -120,15 +120,8 @@ BLECustomCommand::BLECustomCommand(const string& name, const string& description
  : BLECommand(name, description), trigger(trigger) {}
 
 void BLECustomCommand::execute(const vector<string>& arguments) const {
-  BLECustomCommandResultHolder result_holder;
-
-  trigger->trigger(arguments, result_holder);
-
-  optional<string> result = result_holder.get_result();
-  if (result.has_value()) {
-    ESP_LOGD(TAG, "Setting result for custom command %s: %s", get_name().c_str(), result.value().c_str());
-    set_result(result.value());
-  }
+  BLECustomCommandResultSender result_sender;
+  trigger->trigger(arguments, result_sender);
 }
 
 } // namespace esp32_ble_controller

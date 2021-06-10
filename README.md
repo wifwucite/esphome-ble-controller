@@ -117,7 +117,7 @@ Provides the latest log message that matches the configured log level.
 
 #### Custom commands
 
- A custom commmand consists of three parts: name, description (shown by help) and the `on_execute` automation that is executed when the command runs. A custom command can have arguments which are passed to the automation as a vector of strings named `arguments`. In addition a custom command can return a result, which can be defined by assigning a string to the `result` argument as shown in the example below. If defined the result will be written to the command channel charactreistic, where it can be read by a client.
+ A custom commmand consists of three parts: name, description (shown by help) and the `on_execute` automation that is executed when the command runs. A custom command can have arguments which are passed to the automation as a vector of strings named `arguments`. In addition a custom command send a result, which can be defined by assigning a string to the `result` argument or via the `ble_cmd.send_result` automation (similar to [`logger.log`](https://esphome.io/components/logger.html)). Both variants are shown below.
  
  ```yaml
 esp32_ble_controller:
@@ -129,13 +129,12 @@ esp32_ble_controller:
         condition:
           lambda: 'return arguments.empty();'
         then:
-          - logger.log: "test command executed without arguments"
+          - lambda: |-
+              result = "test command executed without arguments";
         else:
-          - logger.log:
+          - ble_cmd.send_result:
               format: "test command executed with argument %s"
               args: 'arguments[0].c_str()'
-    - lambda: |-
-        result = "done with test command";
 ```
 
 ### Supported components

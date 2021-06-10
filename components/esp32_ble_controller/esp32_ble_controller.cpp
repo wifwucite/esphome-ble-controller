@@ -323,18 +323,18 @@ const optional<string> ESP32BLEController::ESP32BLEController::get_current_ssid_
   return wifi_configuration_handler.get_current_ssid();
 }
 
-void ESP32BLEController::set_command_result(const string& result_message) {
-  maintenance_handler->set_command_result(result_message);
+void ESP32BLEController::send_command_result(const string& result_message) {
+  maintenance_handler->send_command_result(result_message);
 }
 
-void ESP32BLEController::set_command_result(const char* format, ...) {
+void ESP32BLEController::send_command_result(const char* format, ...) {
   char buffer[128];
   va_list arg;
   va_start(arg, format);
   vsnprintf(buffer, sizeof(buffer), format, arg);
   va_end(arg);
   
-  maintenance_handler->set_command_result(buffer);
+  maintenance_handler->send_command_result(buffer);
 }
 
 #ifdef USE_BINARY_SENSOR
