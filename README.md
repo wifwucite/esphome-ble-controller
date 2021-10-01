@@ -7,7 +7,7 @@ In addition, there is a command channel, which allows to configure the WIFI cred
 ⚠️ **Note**: This controller only works with ESP32 micro-controllers, not with ESP8266 chips because they do not offer built-in BLE support.
 
 ## Installation
-When using ESPHome 1.18.0 or later you do need to download or copy anything, you can just use refer to this external component from the yaml file as shown below. For earlier versions of ESPHome copy the `components/esp32_ble_controller` directory into your ESPHome `custom_components` directory. (If you do not have such a directory yet, then create it in your ESPHome configuration directory, i.e. the directory storing your yaml files.)
+When using ESPHome 1.18.0 or later you do not need to download or copy anything, you can just use refer to this external component from the yaml file as shown below. For earlier versions of ESPHome copy the `components/esp32_ble_controller` directory into your ESPHome `custom_components` directory. (If you do not have such a directory yet, then create it in your ESPHome configuration directory, i.e. the directory storing your yaml files.)
 
 ## Configuration
 
