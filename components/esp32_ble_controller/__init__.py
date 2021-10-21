@@ -35,7 +35,7 @@ def validate_UUID(value):
 
 BLE_CHARACTERISTIC = cv.Schema({
     cv.Required("characteristic"): validate_UUID,
-    cv.GenerateID(CONF_EXPOSES_COMPONENT): cv.use_id(cg.Nameable), # TASK validate that only supported Nameables are referenced
+    cv.GenerateID(CONF_EXPOSES_COMPONENT): cv.use_id(cg.EntityBase), # TASK validate that only supported EntityBase instances are referenced
     cv.Optional(CONF_BLE_USE_2902, default=True): cv.boolean,
 })
 
@@ -192,6 +192,8 @@ def to_code(config):
     for conf in config.get(CONF_ON_SERVER_DISCONNECTED, []):
         trigger = cg.new_Pvariable(conf[CONF_TRIGGER_ID], var)
         yield automation.build_automation(trigger, [], conf)
+
+    cg.add_library("ESP32 BLE Arduino", "1.0.1");
 
 ### Automation: ble_cmd.set_result ###
 

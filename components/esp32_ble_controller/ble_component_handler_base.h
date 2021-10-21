@@ -5,7 +5,7 @@
 #include <BLEServer.h>
 #include <BLECharacteristic.h>
 
-#include "esphome/core/component.h"
+#include "esphome/core/entity_base.h"
 #include "esphome/core/controller.h"
 #include "esphome/core/defines.h"
 
@@ -17,7 +17,7 @@ namespace esp32_ble_controller {
 struct BLECharacteristicInfoForHandler {
   string service_UUID;
   string characteristic_UUID;
-  boolean use_BLE2902;
+  bool use_BLE2902;
 };
 
 /**
@@ -30,7 +30,7 @@ struct BLECharacteristicInfoForHandler {
  */
 class BLEComponentHandlerBase : private BLECharacteristicCallbacks {
 public:
-  BLEComponentHandlerBase(Nameable* component, const BLECharacteristicInfoForHandler& characteristic_info);
+  BLEComponentHandlerBase(EntityBase* component, const BLECharacteristicInfoForHandler& characteristic_info);
   virtual ~BLEComponentHandlerBase();
 
   void setup(BLEServer* ble_server);
@@ -40,7 +40,7 @@ public:
   virtual void send_value(bool value);
 
 protected:
-  virtual Nameable* get_component() { return component; }
+  virtual EntityBase* get_component() { return component; }
   virtual string get_component_description() { return get_component()->get_name(); }
   BLECharacteristic* get_characteristic() { return characteristic; }
 
@@ -52,7 +52,7 @@ protected:
 private:
   virtual void onWrite(BLECharacteristic *characteristic); // inherited from BLECharacteristicCallbacks
 
-  Nameable* component;
+  EntityBase* component;
   BLECharacteristicInfoForHandler characteristic_info;
 
   BLECharacteristic* characteristic;

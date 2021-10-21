@@ -37,7 +37,7 @@ namespace esp32_ble_controller {
  */
 class BLEComponentHandlerFactory {
 public:
-  static BLEComponentHandlerBase* create_component_handler(Nameable* component, const BLECharacteristicInfoForHandler& characteristic_info);
+  static BLEComponentHandlerBase* create_component_handler(EntityBase* component, const BLECharacteristicInfoForHandler& characteristic_info);
 
 #ifdef USE_BINARY_SENSOR
   static BLEComponentHandlerBase* create_binary_sensor_handler(binary_sensor::BinarySensor* component, const BLECharacteristicInfoForHandler& characteristic_info);

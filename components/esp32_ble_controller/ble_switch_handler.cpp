@@ -2,6 +2,8 @@
 
 #ifdef USE_SWITCH
 
+#include "esphome/core/log.h"
+
 namespace esphome {
 namespace esp32_ble_controller {
 

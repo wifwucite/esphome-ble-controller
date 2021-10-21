@@ -6,7 +6,7 @@
 
 #include <BLEServer.h>
 
-#include "esphome/core/component.h"
+#include "esphome/core/entity_base.h"
 #include "esphome/core/controller.h"
 #include "esphome/core/defines.h"
 #include "esphome/core/preferences.h"
@@ -40,13 +40,13 @@ public:
 
   // pre-setup configurations
 
-  void register_component(Nameable* component, const string& service_UUID, const string& characteristic_UUID, bool use_BLE2902 = true);
+  void register_component(EntityBase* component, const string& service_UUID, const string& characteristic_UUID, bool use_BLE2902 = true);
 
   void register_command(const string& name, const string& description, BLEControllerCustomCommandExecutionTrigger* trigger);
   const vector<BLECommand*>& get_commands() const;
 
   void add_on_show_pass_key_callback(std::function<void(string)>&& trigger_function);
-  void add_on_authentication_complete_callback(std::function<void(boolean)>&& trigger_function);
+  void add_on_authentication_complete_callback(std::function<void(bool)>&& trigger_function);
   void add_on_connected_callback(std::function<void()>&& trigger_function);
   void add_on_disconnected_callback(std::function<void()>&& trigger_function);
 
@@ -148,10 +148,10 @@ private:
 
   ThreadSafeBoundedQueue<std::function<void()>> deferred_functions_for_loop{16};
 
-  CallbackManager<void(string)>  on_show_pass_key_callbacks;
-  CallbackManager<void(boolean)> on_authentication_complete_callbacks;
-  CallbackManager<void()>        on_connected_callbacks;
-  CallbackManager<void()>        on_disconnected_callbacks;
+  CallbackManager<void(string)> on_show_pass_key_callbacks;
+  CallbackManager<void(bool)>   on_authentication_complete_callbacks;
+  CallbackManager<void()>       on_connected_callbacks;
+  CallbackManager<void()>       on_disconnected_callbacks;
 };
 
 /// The BLE controller singleton.

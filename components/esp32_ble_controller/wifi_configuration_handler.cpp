@@ -13,7 +13,7 @@ void WifiConfigurationHandler::setup() {
   // Hash with compilation time
   // This ensures the AP override is not applied for OTA
   uint32_t hash = fnv1_hash("wifi_configuration#" + App.get_compilation_time());
-  wifi_configuration_preference = global_preferences.make_preference<WifiConfiguration>(hash, true);
+  wifi_configuration_preference = global_preferences->make_preference<WifiConfiguration>(hash, true);
 
   WifiConfiguration configuration;
   if (load_configuration(configuration)) {

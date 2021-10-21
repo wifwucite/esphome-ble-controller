@@ -12,7 +12,7 @@ namespace esp32_ble_controller {
 
 static const char *TAG = "ble_component_handler_base";
 
-BLEComponentHandlerBase::BLEComponentHandlerBase(Nameable* component, const BLECharacteristicInfoForHandler& characteristic_info) 
+BLEComponentHandlerBase::BLEComponentHandlerBase(EntityBase* component, const BLECharacteristicInfoForHandler& characteristic_info) 
   : component(component), characteristic_info(characteristic_info)
 {}
 

@@ -10,8 +10,8 @@ namespace esp32_ble_controller {
 
 static const char *TAG = "ble_component_handler_factory";
 
-BLEComponentHandlerBase* BLEComponentHandlerFactory::create_component_handler(Nameable* component, const BLECharacteristicInfoForHandler& characteristic_info) {
-  return new BLEComponentHandler<Nameable>(component, characteristic_info);
+BLEComponentHandlerBase* BLEComponentHandlerFactory::create_component_handler(EntityBase* component, const BLECharacteristicInfoForHandler& characteristic_info) {
+  return new BLEComponentHandler<EntityBase>(component, characteristic_info);
 }
 
 #ifdef USE_BINARY_SENSOR

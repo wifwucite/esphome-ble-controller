@@ -6,6 +6,7 @@
 #include "esphome/core/log.h"
 
 #include <esp_bt_main.h>
+#include <esp32-hal-bt.h>
 
 #include "esp32_ble_controller.h"
 
@@ -24,7 +25,7 @@ ESP32BLEController::ESP32BLEController() : maintenance_handler(new BLEMaintenanc
 
 /// pre-setup configuration ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void ESP32BLEController::register_component(Nameable* component, const string& serviceUUID, const string& characteristic_UUID, bool use_BLE2902) {
+void ESP32BLEController::register_component(EntityBase* component, const string& serviceUUID, const string& characteristic_UUID, bool use_BLE2902) {
   BLECharacteristicInfoForHandler info;
   info.service_UUID = serviceUUID;
   info.characteristic_UUID = characteristic_UUID;
@@ -184,7 +185,7 @@ void ESP32BLEController::setup_ble_services_for_components(const vector<C*>& com
 
 template <typename C> 
 void ESP32BLEController::setup_ble_service_for_component(C* component, BLEComponentHandlerBase* (*handler_creator)(C*, const BLECharacteristicInfoForHandler&)) {
-  static_assert(std::is_base_of<Nameable, C>::value, "Nameable subclasses expected");
+  static_assert(std::is_base_of<EntityBase, C>::value, "EntityBase subclasses expected");
 
   auto object_id = component->get_object_id();
   if (info_for_component.count(object_id)) {
@@ -263,7 +264,7 @@ void ESP32BLEController::register_state_change_callbacks_and_send_initial_states
 
 void ESP32BLEController::initialize_ble_mode() {
   // Note: We include the compilation time to force a reset after flashing new firmware
-  ble_mode_preference = global_preferences.make_preference<uint8_t>(fnv1_hash("ble-mode#" + App.get_compilation_time()));
+  ble_mode_preference = global_preferences->make_preference<uint8_t>(fnv1_hash("ble-mode#" + App.get_compilation_time()));
 
   uint8_t mode;
   if (!ble_mode_preference.load(&mode)) {
@@ -374,7 +375,7 @@ void ESP32BLEController::send_command_result(const char* format, ...) {
 
 template <typename C, typename S> 
 void ESP32BLEController::update_component_state(C* component, S state) {
-  static_assert(std::is_base_of<Nameable, C>::value, "Nameable subclasses expected");
+  static_assert(std::is_base_of<EntityBase, C>::value, "EntityBase subclasses expected");
 
   auto object_id = component->get_object_id();
   BLEComponentHandlerBase* handler = handler_for_component[object_id];
@@ -384,7 +385,7 @@ void ESP32BLEController::update_component_state(C* component, S state) {
 }
 
 void ESP32BLEController::execute_in_loop(std::function<void()>&& deferred_function) {
-  boolean ok = deferred_functions_for_loop.push(std::move(deferred_function));
+  bool ok = deferred_functions_for_loop.push(std::move(deferred_function));
   if (!ok) {
     ESP_LOGW(TAG, "Deferred functions queue full");
   }
@@ -433,7 +434,7 @@ void ESP32BLEController::onPassKeyNotify(uint32_t pass_key) {
 
 void ESP32BLEController::onAuthenticationComplete(esp_ble_auth_cmpl_t result) {
   auto& callbacks = on_authentication_complete_callbacks;
-  boolean success=result.success;
+  bool success=result.success;
   global_ble_controller->execute_in_loop([&callbacks, success](){
     if (success) {
       ESP_LOGD(TAG, "BLE authentication - completed succesfully");

@@ -25,10 +25,10 @@ public:
 };
 
 /// Trigger that is fired when authentication with a client is completed (either with success or failure).
-class BLEControllerAuthenticationCompleteTrigger : public Trigger<boolean> {
+class BLEControllerAuthenticationCompleteTrigger : public Trigger<bool> {
 public:
   BLEControllerAuthenticationCompleteTrigger(ESP32BLEController* controller) {
-    controller->add_on_authentication_complete_callback([this](boolean success) {
+    controller->add_on_authentication_complete_callback([this](bool success) {
       this->trigger(success);
     });
   }

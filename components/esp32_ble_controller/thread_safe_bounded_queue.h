@@ -20,14 +20,14 @@ public:
    * @param object object to append to the queue (treated as r-value)
    * @return true if successful, false if queue is full
    */
-  boolean push(T&& object);
+  bool push(T&& object);
 
   /**
    * Takes the first queued element from the queue (if any) and moves it to the given object.
    * @param object object to store the dequeued value
    * @return true if successful, false if queue was empty
    */
-  boolean take(T& object);
+  bool take(T& object);
 
 private:
   QueueHandle_t queue;
@@ -39,7 +39,7 @@ ThreadSafeBoundedQueue<T>::ThreadSafeBoundedQueue(unsigned int size) {
 }
 
 template <typename T>
-boolean ThreadSafeBoundedQueue<T>::push(T&& object) {
+bool ThreadSafeBoundedQueue<T>::push(T&& object) {
   T* pointer_to_copy = new T();
   *pointer_to_copy = std::move(object);
 
@@ -49,7 +49,7 @@ boolean ThreadSafeBoundedQueue<T>::push(T&& object) {
 }
 
 template <typename T>
-boolean ThreadSafeBoundedQueue<T>::take(T& object) {
+bool ThreadSafeBoundedQueue<T>::take(T& object) {
   T* pointer_to_object; 
   auto result = xQueueReceive(queue, &pointer_to_object, 0);
   if (result != pdPASS) {

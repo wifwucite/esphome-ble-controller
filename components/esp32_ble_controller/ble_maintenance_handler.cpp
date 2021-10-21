@@ -112,7 +112,7 @@ bool BLEMaintenanceHandler::is_security_enabled() {
 string remove_logger_magic(const string& message) {
   // Note: We do not use regex replacement because it enlarges the binary by roughly 50kb!
   string result;
-  boolean within_magic = false;
+  bool within_magic = false;
   for (string::size_type i = 0; i < message.length() - 1; ++i) {
     if (message[i] == '\033' && message[i+1] == '[') { // log magic always starts with "\033[" see log.h
       within_magic = true;
