@@ -141,7 +141,7 @@ BLECommandLogLevel::BLECommandLogLevel() : BLECommand("log-level", "gets or sets
 void BLECommandLogLevel::execute(const vector<string>& arguments) const {
   if (!arguments.empty()) {
     string log_level = arguments[0];
-    const optional<int> level = parse_int(log_level);
+    const optional<int> level = parse_number<int>(log_level);
     if (level.has_value()) {
       global_ble_controller->set_log_level(level.value());
     }

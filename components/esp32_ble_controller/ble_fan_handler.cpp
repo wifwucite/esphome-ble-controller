@@ -79,7 +79,7 @@ void BLEFanHandler::on_characteristic_written() {
     }
     
     if (traits.supports_speed()) {
-      const optional<int> opt_speed = parse_int(option);
+      const optional<int> opt_speed = parse_number<int>(option);
       if (opt_speed.has_value()) {
         const int speed = opt_speed.value();
         if (speed >= 0 && speed <= traits.supported_speed_count()) {
