@@ -63,21 +63,25 @@ esp32_ble_controller:
     on_execute:
     - logger.log: "test command executed"
 
-  # allows to enable or disable security, default is 'show_pass_key'
+  # allows to enable or disable security, default is 'secure'
   # Options:
   # - none: 
   #     disables security
-  # - show_pass_key: 
-  #     upon first pairing the other device (your phone) sends a 6-digit pass key to the ESP and the ESP is supposed to display so that it can be entered on the other device
-  security_mode: show_pass_key
+  # - bond:
+  #     no real security, but devices do some bonding (pairing) upon first connect
+  # - secure:
+  #     enables secure connections and man-in-the-middle protection
+  # If the "on_show_pass_key" automation is present, then upon first pairing the other device (your phone) sends a 6-digit pass key to the ESP and the ESP is supposed to display it so that it can be entered on the other device.
+  # This automation is not available for the "non" mode, optional for the "bond" mode, and required for the "secure" mode.
+  security_mode: secure
 
-  # automation that is invoked when the pass key should be displayed, the pass key is available in the automation as "pass_key" variable of type std::string
+  # automation that is invoked when the pass key should be displayed, the pass key is available in the automation as "pass_key" variable of type std::string (not available if security mode is "none")
   # the example below just logs the pass keys
   on_show_pass_key:
   - logger.log:
       format: "pass key is %s"
       args: 'pass_key.c_str()'
-  # automation that is invoked when the authentication is complete, the boolean "success" indicates success or failure
+  # automation that is invoked when the authentication is complete, the boolean "success" indicates success or failure (not available if security mode is "none")
   on_authentication_complete:
   - logger.log:
       format: "BLE authentication complete %d" # shows 1 on success, 0 on failure
@@ -93,7 +97,9 @@ esp32_ble_controller:
 
 ### BLE security
 
-By default security is switched on, which means that the ESP32 has to be paired (bonded) when it is used for the first time with a new device. (This feature can be switched off via configuration.) Protection against man-in-the-middle attacks is enabled. The device to be paired sends a pass key (a 6 digit PIN) to the ESP32. Via the `on_show_pass_key` automation you can log the pass key or even show it on a display. (At the bottom you can find an example that makes use of a display to show the pass key until pairing is complete.)
+By default security is switched on, which means that the ESP32 has to be bonded (paired) when it is used for the first time with a new device. (This feature can be switched off via configuration.) Secure connections and protection against man-in-the-middle attacks are enabled. The device to be bonded sends a pass key (a 6 digit PIN) to the ESP32. Via the `on_show_pass_key` automation you can log the pass key or even show it on a display. (At the bottom you can find an example that makes use of a display to show the pass key until pairing is complete.)
+
+Note: On some computers (like the MacBook Pro for example) the very first bonding process seems to fail if the security is enabled. In that case you can change the security mode to "bond" for the very first encounter. After that succeeded you may change the mode back to "secure". Even if you delete the bonding information from both devices later on, secure bonding attempts will work and recreate the bonding.
 
 ### Maintenance service
 
@@ -178,7 +184,6 @@ esp32_ble_controller:
     characteristics:
       - characteristic: "beb5483e-36e1-4688-b7f5-ea07361b26ab"
         exposes: template_switch
-  security_mode: show_pass_key
   on_show_pass_key:
     then:
       - lambda: |-

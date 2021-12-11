@@ -11,7 +11,7 @@ namespace esp32_ble_controller {
 
 static const char *TAG = "ble_utils";
 
-vector<string> get_paired_devices() {
+vector<string> get_bonded_devices() {
   vector<string> paired_devices;
 
   int dev_num = esp_ble_get_bond_device_num();
@@ -31,7 +31,7 @@ vector<string> get_paired_devices() {
   return paired_devices;
 }
 
-void remove_all_paired_devices()
+void remove_all_bonded_devices()
 {
   int dev_num = esp_ble_get_bond_device_num();
 

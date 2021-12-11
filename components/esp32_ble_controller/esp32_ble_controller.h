@@ -23,6 +23,8 @@ using std::vector;
 namespace esphome {
 namespace esp32_ble_controller {
 
+enum BLESecurityMode : uint8_t { NONE, SECURE, BOND };
+
 class BLEControllerCustomCommandExecutionTrigger;
 
 /**
@@ -50,8 +52,12 @@ public:
   void add_on_connected_callback(std::function<void()>&& trigger_function);
   void add_on_disconnected_callback(std::function<void()>&& trigger_function);
 
+  void set_security_mode(BLESecurityMode mode) { security_mode = mode; }
+  inline BLESecurityMode get_security_mode() const { return security_mode; }
+
+  // deprecated
   void set_security_enabled(bool enabled);
-  inline bool get_security_enabled() const { return security_enabled; }
+  inline bool get_security_enabled() const { return security_mode != NONE; }
 
   // setup
 
@@ -137,7 +143,8 @@ private:
   BLEMaintenanceMode ble_mode;
   ESPPreferenceObject ble_mode_preference;
 
-  bool security_enabled{true};
+  BLESecurityMode security_mode{SECURE};
+  bool can_show_pass_key{false};
 
   BLEMaintenanceHandler* maintenance_handler;
 

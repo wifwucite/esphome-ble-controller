@@ -106,13 +106,13 @@ BLECommandPairings::BLECommandPairings() : BLECommand("pairings", "'pairings [cl
 void BLECommandPairings::execute(const vector<string>& arguments) const {
   if (!arguments.empty()) {
     if (arguments[0] == "clear") {
-      remove_all_paired_devices();
+      remove_all_bonded_devices();
       set_result("Pairings cleared.");
       return;
     }
   }
   
-  vector<string> paired_devices = get_paired_devices();
+  vector<string> paired_devices = get_bonded_devices();
   if (paired_devices.empty()) {
     set_result("No paired devices.");
   } else {

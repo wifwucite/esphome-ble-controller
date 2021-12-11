@@ -43,6 +43,7 @@ const vector<BLECommand*>& ESP32BLEController::get_commands() const {
 }
 
 void ESP32BLEController::add_on_show_pass_key_callback(std::function<void(string)>&& trigger_function) {
+  can_show_pass_key = true;
   on_show_pass_key_callbacks.add(std::move(trigger_function));
 }
 
@@ -59,7 +60,7 @@ void ESP32BLEController::add_on_disconnected_callback(std::function<void()>&& tr
 }
 
 void ESP32BLEController::set_security_enabled(bool enabled) {
-  security_enabled = enabled;
+  set_security_mode(SECURE);
 }
 
 /// setup ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -300,16 +301,20 @@ void ESP32BLEController::dump_config() {
   ESP_LOGCONFIG(TAG, "Bluetooth Low Energy Controller:");
   ESP_LOGCONFIG(TAG, "  BLE mode: %d", (uint8_t) ble_mode);
 
-  if (get_security_enabled()) {
-    ESP_LOGCONFIG(TAG, "  security enabled");
-
-    vector<string> paired_devices = get_paired_devices();
-    if (paired_devices.empty()) {
-      ESP_LOGCONFIG(TAG, "  no paired BLE devices");
+  if (get_security_mode() != NONE) {
+    if (get_security_mode() == BOND) {
+      ESP_LOGCONFIG(TAG, "  only bonding enabled, no real security");
     } else {
-      ESP_LOGCONFIG(TAG, "  paired BLE devices (%d):", paired_devices.size());
+      ESP_LOGCONFIG(TAG, "  security enabled (secure connections, MITM protection)");
+    }
+
+    vector<string> bonded_devices = get_bonded_devices();
+    if (bonded_devices.empty()) {
+      ESP_LOGCONFIG(TAG, "  no bonded BLE devices");
+    } else {
+      ESP_LOGCONFIG(TAG, "  bonded BLE devices (%d):", bonded_devices.size());
       int i = 0;
-      for (const auto& bd_address : paired_devices) {
+      for (const auto& bd_address : bonded_devices) {
         ESP_LOGCONFIG(TAG, "    %d) BD address %s", ++i, bd_address.c_str());
       }
     }
@@ -399,7 +404,7 @@ void ESP32BLEController::loop() {
 }
 
 void ESP32BLEController::configure_ble_security() {
-  if (!get_security_enabled()) {
+  if (get_security_mode() == NONE) {
     return;
   }
 
@@ -410,8 +415,8 @@ void ESP32BLEController::configure_ble_security() {
 
   // see https://github.com/espressif/esp-idf/blob/b0150615dff529662772a60dcb57d5b559f480e2/examples/bluetooth/bluedroid/ble/gatt_security_server/tutorial/Gatt_Security_Server_Example_Walkthrough.md
   BLESecurity security;
-  security.setAuthenticationMode(ESP_LE_AUTH_REQ_SC_MITM_BOND);
-  security.setCapability(ESP_IO_CAP_OUT);
+  security.setAuthenticationMode(get_security_mode() == BOND ? ESP_LE_AUTH_BOND : ESP_LE_AUTH_REQ_SC_MITM_BOND);
+  security.setCapability(can_show_pass_key ? ESP_IO_CAP_OUT : ESP_IO_CAP_NONE);
   security.setInitEncryptionKey(ESP_BLE_ENC_KEY_MASK | ESP_BLE_ID_KEY_MASK);
   security.setRespEncryptionKey(ESP_BLE_ENC_KEY_MASK | ESP_BLE_ID_KEY_MASK);
   security.setKeySize(16);

@@ -74,11 +74,14 @@ BLE_COMMAND = cv.Schema({
 
 # security mode enumeration #####
 CONF_SECURITY_MODE = 'security_mode'
-CONF_SECURITY_MODE_NONE = 'none'
-CONF_SECURITY_MODE_SHOW_PASS_KEY = 'show_pass_key'
+BLESecurityMode = esp32_ble_controller_ns.enum("BLESecurityMode")
+CONF_SECURITY_MODE_NONE = 'none' # no security, no bonding
+CONF_SECURITY_MODE_BOND = 'bond' # no secure connection, no man-in-the-middle protection, just bonding (pairing)
+CONF_SECURITY_MODE_SECURE = 'secure' # default: bonding, secure connection, MITM protection
 SECURTY_MODE_OPTIONS = {
-    CONF_SECURITY_MODE_NONE: False,
-    CONF_SECURITY_MODE_SHOW_PASS_KEY: True,
+    CONF_SECURITY_MODE_NONE: BLESecurityMode.NONE,
+    CONF_SECURITY_MODE_BOND: BLESecurityMode.BOND,
+    CONF_SECURITY_MODE_SECURE: BLESecurityMode.SECURE,
 }
 
 # authetication and (dis)connected automations #####
@@ -88,15 +91,25 @@ BLEControllerShowPassKeyTrigger = esp32_ble_controller_ns.class_('BLEControllerS
 CONF_ON_AUTHENTICATION_COMPLETE = "on_authentication_complete"
 BLEControllerAuthenticationCompleteTrigger = esp32_ble_controller_ns.class_('BLEControllerAuthenticationCompleteTrigger', automation.Trigger.template())
 
-def require_config_setting_for_automation(automation_id, setting_key, required_setting_value, config):
-    """Validates that a given automation is only present if a given setting has a given value."""
-    if automation_id in config and config[setting_key] != required_setting_value:
-        raise cv.Invalid("Automation '" + automation_id + "' only available if " + setting_key + " = " + required_setting_value)
+def forbid_config_setting_for_automation(automation_id, setting_key, forbidden_setting_value, config):
+    """Validates that a given automation is only present if a given setting does not have a given value."""
+    if automation_id in config and config[setting_key] == forbidden_setting_value:
+        raise cv.Invalid("Automation '" + automation_id + "' not available if " + setting_key + " = " + forbidden_setting_value)
 
 def automations_available(config):
-    """Validates that the pass key related automations are only present if the security mode is set to show a pass key."""
-    require_config_setting_for_automation(CONF_ON_SHOW_PASS_KEY, CONF_SECURITY_MODE, CONF_SECURITY_MODE_SHOW_PASS_KEY, config)
-    require_config_setting_for_automation(CONF_ON_AUTHENTICATION_COMPLETE, CONF_SECURITY_MODE, CONF_SECURITY_MODE_SHOW_PASS_KEY, config)
+    """Validates that the security related automations are only present if the security mode is not none."""
+    forbid_config_setting_for_automation(CONF_ON_SHOW_PASS_KEY, CONF_SECURITY_MODE, CONF_SECURITY_MODE_NONE, config)
+    forbid_config_setting_for_automation(CONF_ON_AUTHENTICATION_COMPLETE, CONF_SECURITY_MODE, CONF_SECURITY_MODE_NONE, config)
+    return config
+
+def require_automation_for_config_setting(automation_id, setting_key, requiring_setting_value, config):
+    """Validates that a given automation is only present if a given setting does not have a given value."""
+    if config[setting_key] == requiring_setting_value and not automation_id in config:
+        raise cv.Invalid("Automation '" + automation_id + "' required if " + setting_key + " = " + requiring_setting_value)
+
+def required_automations_present(config):
+    """Validates that the pass key related automation is present if the security mode is set to secure."""
+    require_automation_for_config_setting(CONF_ON_SHOW_PASS_KEY, CONF_SECURITY_MODE, CONF_SECURITY_MODE_SECURE, config)
     return config
 
 CONF_ON_SERVER_CONNECTED = "on_connected"
@@ -113,7 +126,7 @@ CONFIG_SCHEMA = cv.All(cv.only_on_esp32, cv.Schema({
 
     cv.Optional(CONF_BLE_COMMANDS): cv.ensure_list(BLE_COMMAND),
 
-    cv.Optional(CONF_SECURITY_MODE, default=CONF_SECURITY_MODE_SHOW_PASS_KEY): cv.enum(SECURTY_MODE_OPTIONS),
+    cv.Optional(CONF_SECURITY_MODE, default=CONF_SECURITY_MODE_SECURE): cv.enum(SECURTY_MODE_OPTIONS),
 
     cv.Optional(CONF_ON_SHOW_PASS_KEY): automation.validate_automation({
         cv.GenerateID(CONF_TRIGGER_ID): cv.declare_id(BLEControllerShowPassKeyTrigger),
@@ -129,7 +142,7 @@ CONFIG_SCHEMA = cv.All(cv.only_on_esp32, cv.Schema({
         cv.GenerateID(CONF_TRIGGER_ID): cv.declare_id(BLEControllerServerDisconnectedTrigger),
     }),
 
-    }), automations_available)
+    }), automations_available, required_automations_present)
 
 ### Code generation ############################################################################################
 
@@ -173,17 +186,15 @@ def to_code(config):
         yield to_code_command(var, cmd)
 
     security_enabled = SECURTY_MODE_OPTIONS[config[CONF_SECURITY_MODE]]
-    cg.add(var.set_security_enabled(config[CONF_SECURITY_MODE]))
+    cg.add(var.set_security_mode(config[CONF_SECURITY_MODE]))
 
     for conf in config.get(CONF_ON_SHOW_PASS_KEY, []):
-        if security_enabled:
-            trigger = cg.new_Pvariable(conf[CONF_TRIGGER_ID], var)
-            yield automation.build_automation(trigger, [(cg.std_string, 'pass_key')], conf)
+        trigger = cg.new_Pvariable(conf[CONF_TRIGGER_ID], var)
+        yield automation.build_automation(trigger, [(cg.std_string, 'pass_key')], conf)
 
     for conf in config.get(CONF_ON_AUTHENTICATION_COMPLETE, []):
-        if security_enabled:
-            trigger = cg.new_Pvariable(conf[CONF_TRIGGER_ID], var)
-            yield automation.build_automation(trigger, [(cg.bool_, 'success')], conf)
+        trigger = cg.new_Pvariable(conf[CONF_TRIGGER_ID], var)
+        yield automation.build_automation(trigger, [(cg.bool_, 'success')], conf)
 
     for conf in config.get(CONF_ON_SERVER_CONNECTED, []):
         trigger = cg.new_Pvariable(conf[CONF_TRIGGER_ID], var)
