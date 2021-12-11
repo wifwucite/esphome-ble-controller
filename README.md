@@ -100,7 +100,7 @@ esp32_ble_controller:
 
 By default security is switched on, which means that the ESP32 has to be bonded (paired) when it is used for the first time with a new device. (This feature can be switched off via configuration.) Secure connections and protection against man-in-the-middle attacks are enabled. The device to be bonded sends a pass key (a 6 digit PIN) to the ESP32. Via the `on_show_pass_key` automation you can log the pass key or even show it on a display. (At the bottom you can find an example that makes use of a display to show the pass key until pairing is complete.)
 
-Note: On some computers (like the MacBook Pro for example) the very first bonding process seems to fail if the security is enabled. In that case you can change the security mode to "bond" for the very first encounter. After that succeeded you may change the mode back to "secure". Even if you delete the bonding information from both devices later on, secure bonding attempts will work and recreate the bonding.
+Note: On some computers (like the MacBook Pro for example) the very first bonding process seems to fail if the security is enabled. In that case you can change the security mode to "bond" for the very first encounter (without an `on_show_pass_key` automation). After that succeeded you may change the mode back to "secure". Even if you delete the bonding information from both devices later on, secure bonding attempts will work and recreate the bonding.
 
 ### Maintenance service
 
