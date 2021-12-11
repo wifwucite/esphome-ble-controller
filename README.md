@@ -71,8 +71,9 @@ esp32_ble_controller:
   #     no real security, but devices do some bonding (pairing) upon first connect
   # - secure:
   #     enables secure connections and man-in-the-middle protection
-  # If the "on_show_pass_key" automation is present, then upon first pairing the other device (your phone) sends a 6-digit pass key to the ESP and the ESP is supposed to display it so that it can be entered on the other device.
-  # This automation is not available for the "non" mode, optional for the "bond" mode, and required for the "secure" mode.
+  # If the "on_show_pass_key" automation is present, then upon first pairing the other device (your phone) 
+  # sends a 6-digit pass key to the ESP and the ESP is supposed to display it so that it can be entered on the other device.
+  # This automation is not available for the "none" mode, optional for the "bond" mode, and required for the "secure" mode.
   security_mode: secure
 
   # automation that is invoked when the pass key should be displayed, the pass key is available in the automation as "pass_key" variable of type std::string (not available if security mode is "none")
