@@ -66,6 +66,7 @@ void BLECommandSwitchServicesOnOrOff::execute(const vector<string>& arguments) c
 
 // wifi-config ///////////////////////////////////////////////////////////////////////////////////////////////
 
+#ifdef USE_WIFI
 BLECommandWifiConfiguration::BLECommandWifiConfiguration() : BLECommand("wifi-config", "sets or clears the WIFI configuration") {}
 
 void BLECommandWifiConfiguration::execute(const vector<string>& arguments) const {
@@ -98,6 +99,7 @@ string BLECommandWifiConfiguration::get_command_specific_help() const {
       return "'wifi-config <ssid> <pwd> [hidden]' sets WIFI SSID and password and if the network is hidden.";
     }
 }
+#endif
 
 // pairings ///////////////////////////////////////////////////////////////////////////////////////////////
 

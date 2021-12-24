@@ -1,5 +1,7 @@
 #include "wifi_configuration_handler.h"
 
+#ifdef USE_WIFI
+
 #include "esphome/core/application.h"
 #include "esphome/core/log.h"
 #include "esphome/components/wifi/wifi_component.h"
@@ -78,3 +80,5 @@ void WifiConfigurationHandler::override_sta(const WifiConfiguration& configurati
 
 } // namespace esp32_ble_controller
 } // namespace esphome
+
+#endif

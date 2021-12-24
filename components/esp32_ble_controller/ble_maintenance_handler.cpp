@@ -26,7 +26,9 @@ static const char *TAG = "ble_maintenance_handler";
 BLEMaintenanceHandler::BLEMaintenanceHandler() {
   commands.push_back(new BLECommandHelp());
   commands.push_back(new BLECommandSwitchServicesOnOrOff());
+#ifdef USE_WIFI
   commands.push_back(new BLECommandWifiConfiguration());
+#endif
   commands.push_back(new BLECommandPairings());
   commands.push_back(new BLECommandVersion());
 

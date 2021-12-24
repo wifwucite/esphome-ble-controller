@@ -1,5 +1,7 @@
 #pragma once
 
+#ifdef USE_WIFI
+
 #include <string>
 
 #include "esphome/core/defines.h"
@@ -38,3 +40,6 @@ private:
 
 } // namespace esp32_ble_controller
 } // namespace esphome
+
+
+#endif
