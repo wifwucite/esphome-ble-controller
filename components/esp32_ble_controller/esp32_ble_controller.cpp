@@ -70,7 +70,9 @@ void ESP32BLEController::setup() {
 
   initialize_ble_mode();
 
+  #ifdef USE_WIFI
   wifi_configuration_handler.setup();
+  #endif
 
   if (!setup_ble()) {
     return;
@@ -325,6 +327,7 @@ void ESP32BLEController::dump_config() {
 
 /// run ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#ifdef USE_WIFI
 void ESP32BLEController::ESP32BLEController::set_wifi_configuration(const string& ssid, const string& password, bool hidden_network) {
   wifi_configuration_handler.set_credentials(ssid, password, hidden_network);
 }
@@ -338,6 +341,7 @@ void ESP32BLEController::ESP32BLEController::clear_wifi_configuration_and_reboot
 const optional<string> ESP32BLEController::ESP32BLEController::get_current_ssid_in_wifi_configuration() {
   return wifi_configuration_handler.get_current_ssid();
 }
+#endif
 
 void ESP32BLEController::send_command_result(const string& result_message) {
   maintenance_handler->send_command_result(result_message);

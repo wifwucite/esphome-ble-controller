@@ -6,6 +6,8 @@
 #include "esphome/core/preferences.h"
 #include "esphome/core/optional.h"
 
+#ifdef USE_WIFI
+
 namespace esphome {
 namespace esp32_ble_controller {
 
@@ -38,3 +40,6 @@ private:
 
 } // namespace esp32_ble_controller
 } // namespace esphome
+
+
+#endif

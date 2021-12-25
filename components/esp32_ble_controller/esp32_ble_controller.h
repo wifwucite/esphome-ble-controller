@@ -14,7 +14,9 @@
 #include "ble_component_handler_base.h"
 #include "ble_maintenance_handler.h"
 #include "thread_safe_bounded_queue.h"
+#ifdef USE_WIFI
 #include "wifi_configuration_handler.h"
+#endif
 
 using std::string;
 using std::unordered_map;
@@ -80,9 +82,11 @@ public:
   void set_log_level(int level) { maintenance_handler->set_log_level(level); }
 #endif
 
+#ifdef USE_WIFI
   void set_wifi_configuration(const string& ssid, const string& password, bool hidden_network);
   void clear_wifi_configuration_and_reboot();
   const optional<string> get_current_ssid_in_wifi_configuration();
+#endif
 
   void send_command_result(const string& result_message);
   void send_command_result(const char* result_msg_format, ...);
@@ -148,7 +152,9 @@ private:
 
   BLEMaintenanceHandler* maintenance_handler;
 
+#ifdef USE_WIFI
   WifiConfigurationHandler wifi_configuration_handler;
+#endif
 
   unordered_map<string, BLECharacteristicInfoForHandler> info_for_component;
   unordered_map<string, BLEComponentHandlerBase*> handler_for_component;
