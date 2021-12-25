@@ -1,12 +1,12 @@
 #pragma once
 
-#ifdef USE_WIFI
-
 #include <string>
 
 #include "esphome/core/defines.h"
 #include "esphome/core/preferences.h"
 #include "esphome/core/optional.h"
+
+#ifdef USE_WIFI
 
 namespace esphome {
 namespace esp32_ble_controller {
