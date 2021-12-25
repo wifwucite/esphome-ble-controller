@@ -2,7 +2,7 @@ This component provides a Bluetooth Low Energy (BLE) controller for [ESPHome](ht
 
 ![BLE connection from phone](BLE-Services-and-Characteristics.png)
 
-In addition, there is a command channel, which allows to configure the WIFI credentials for the ESP32 over BLE (among other things).
+In addition, there is a command channel, which allows to configure the WiFi credentials for the ESP32 over BLE (among other things).
 
 ⚠️ **Note**: This controller only works with ESP32 micro-controllers, not with ESP8266 chips because they do not offer built-in BLE support.
 
@@ -113,9 +113,9 @@ There are also some built-in commands, which are always available:
   * help [&lt;command>]:
     Without argument, it lists all available commands. When the name of a command is given like in "help log-level" it displays a specific description for this command.
   * ble-services [on|off]:
-    Switches the component related (non-maintenance) BLE services on or off. You may wonder why one should switch off these services. On most ESP32 boards both BLE and WiFi share the same physical 2,4 GHz antenna on the ESP32. So, too much traffic on both of them can cause it to crash and reboot. Short-lived WiFi connections for sending MQTT messages work fine with services enabled. However, when connecting to the [web server](https://esphome.io/components/web_server.html) or for [OTA updates](https://esphome.io/components/ota.html) services should be disabled.
+    Switches the component related (non-maintenance) BLE services on or off. You may wonder why one should switch off these services. On most ESP32 boards both BLE and WiFi share the same physical 2,4 GHz antenna on the ESP32. So, too much traffic on both of them can cause it to crash and reboot. Short-lived WiFi connections for sending MQTT messages work fine with services enabled. However, when connecting to the [web server](https://esphome.io/components/web_server.html) or for [OTA updates](https://esphome.io/components/ota.html) services should be disabled. (Note that ESPHome permits configurations without the WiFi component, so if you encounter problems with BLE you could try disabling WiFi completely.)
   * wifi-config &lt;ssid> &lt;password> [hidden]:
-    Sets the SSID and the password to use for connecting to WIFI. The optional 'hidden' argument marks the network as hidden network. It is recommended to use this command only when security is enabled. You can also use "wifi-config clear" to clear the wifi configuration; then the default credentials (compiled into the firmware) will be used.
+    Sets the SSID and the password to use for connecting to WiFi. The optional 'hidden' argument marks the network as hidden network. It is recommended to use this command only when security is enabled. You can also use "wifi-config clear" to clear the WiFi configuration; then the default credentials (compiled into the firmware) will be used. (This command is only available if the WiFi component has been configured at all.)
   * parings [clear]:
     Lists the addresses of all paired devices, or clears all paired devices.
   * version:
