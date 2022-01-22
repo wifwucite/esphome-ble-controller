@@ -192,12 +192,8 @@ void ESP32BLEController::setup_ble_service_for_component(C* component, BLECompon
 
   auto object_id = component->get_object_id();
   if (info_for_component.count(object_id)) {
-    if (component->is_internal()) {
-      ESP_LOGW(TAG, "Component %s is internal and will not be available via BLE.", component->get_name().c_str());
-    } else {
-      auto info = info_for_component[object_id];
-      handler_for_component[object_id] = handler_creator(component, info);
-    }
+    auto info = info_for_component[object_id];
+    handler_for_component[object_id] = handler_creator(component, info);
   }
 }
 
