@@ -297,6 +297,7 @@ void ESP32BLEController::set_ble_mode(uint8_t newMode) {
 
 void ESP32BLEController::dump_config() {
   ESP_LOGCONFIG(TAG, "Bluetooth Low Energy Controller:");
+  ESP_LOGCONFIG(TAG, "  BLE device address: %s", BLEDevice::getAddress().toString().c_str());
   ESP_LOGCONFIG(TAG, "  BLE mode: %d", (uint8_t) ble_mode);
 
   if (get_security_mode() != NONE) {
