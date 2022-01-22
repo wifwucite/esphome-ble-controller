@@ -30,7 +30,7 @@ public:
   BLEMaintenanceHandler();
   virtual ~BLEMaintenanceHandler() {}
 
-  void setup(BLEServer* ble_server);
+  void setup(BLEServer* ble_server, bool exposed);
 
   void add_command(BLECommand* command) { commands.push_back(command); }
   const vector<BLECommand*>& get_commands() const { return commands; }
@@ -47,7 +47,7 @@ public:
 
 private:
   virtual void onWrite(BLECharacteristic *characteristic) override;
-  void on_command_written();
+  void on_command_written(string command_line);
 
   bool is_security_enabled();
   

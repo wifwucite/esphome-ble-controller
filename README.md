@@ -76,6 +76,11 @@ esp32_ble_controller:
   # This automation is not available for the "none" mode, optional for the "bond" mode, and required for the "secure" mode.
   security_mode: secure
 
+  # Whether to expose the maintenance service, which allows viewing logs, or executing commands.
+  # When set to 'false', the service is not exposed.
+  # Useful when security is set to 'none' so there is no risk that the node will be abused.
+  expose_maintenance_service: true
+
   # automation that is invoked when the pass key should be displayed, the pass key is available in the automation as "pass_key" variable of type std::string (not available if security mode is "none")
   # the example below just logs the pass keys
   on_show_pass_key:

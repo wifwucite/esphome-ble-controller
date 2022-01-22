@@ -138,7 +138,7 @@ void ESP32BLEController::setup_ble_server_and_services() {
   ble_server = BLEDevice::createServer();
   ble_server->setCallbacks(this);
 
-  maintenance_handler->setup(ble_server);
+  maintenance_handler->setup(ble_server, get_maintenance_service_exposed());
 
   if (get_ble_mode() != BLEMaintenanceMode::WIFI_ONLY) {
     setup_ble_services_for_components();
@@ -299,6 +299,7 @@ void ESP32BLEController::dump_config() {
   ESP_LOGCONFIG(TAG, "Bluetooth Low Energy Controller:");
   ESP_LOGCONFIG(TAG, "  BLE device address: %s", BLEDevice::getAddress().toString().c_str());
   ESP_LOGCONFIG(TAG, "  BLE mode: %d", (uint8_t) ble_mode);
+  ESP_LOGCONFIG(TAG, "  Maintenance service exposed: %s", maintenance_service_exposed ? "true" : "false");
 
   if (get_security_mode() != NONE) {
     if (get_security_mode() == BOND) {

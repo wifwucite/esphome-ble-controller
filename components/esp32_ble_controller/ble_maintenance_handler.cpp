@@ -37,46 +37,50 @@ BLEMaintenanceHandler::BLEMaintenanceHandler() {
 #endif
 }
 
-void BLEMaintenanceHandler::setup(BLEServer* ble_server) {
+void BLEMaintenanceHandler::setup(BLEServer* ble_server, bool exposed) {
   ESP_LOGCONFIG(TAG, "Setting up maintenance service");
 
-  BLEService* service = ble_server->createService(SERVICE_UUID);
+  if (exposed) {
+    BLEService* service = ble_server->createService(SERVICE_UUID);
 
-  ble_command_characteristic = create_writeable_ble_characteristic(service, CHARACTERISTIC_UUID_CMD, this, "BLE Command Channel");
-  ble_command_characteristic->setValue("Send 'help' for help.");
- 
-#ifdef USE_LOGGER
-  logging_characteristic = create_read_only_ble_characteristic(service, CHARACTERISTIC_UUID_LOGGING, "Log messages");
-#endif
-
-  service->start();
+    ble_command_characteristic = create_writeable_ble_characteristic(service, CHARACTERISTIC_UUID_CMD, this, "BLE Command Channel");
+    ble_command_characteristic->setValue("Send 'help' for help.");
 
 #ifdef USE_LOGGER
-  log_level = ESPHOME_LOG_LEVEL;
-  if (global_ble_controller->get_ble_mode() != BLEMaintenanceMode::BLE_ONLY) {
-    log_level = ESPHOME_LOG_LEVEL_CONFIG;
-  }
-
-  // NOTE: We register the callback after the service has been started!
-  if (logger::global_logger != nullptr) {
-    logger::global_logger->add_on_log_callback([this](int level, const char *tag, const char *message) {
-      // publish log message
-      this->send_log_message(level, tag, message);
-    });
-  }
+    logging_characteristic = create_read_only_ble_characteristic(service, CHARACTERISTIC_UUID_LOGGING, "Log messages");
 #endif
+
+    service->start();
+
+
+#ifdef USE_LOGGER
+    log_level = ESPHOME_LOG_LEVEL;
+    if (global_ble_controller->get_ble_mode() != BLEMaintenanceMode::BLE_ONLY) {
+      log_level = ESPHOME_LOG_LEVEL_CONFIG;
+    }
+
+    // NOTE: We register the callback after the service has been started!
+    if (logger::global_logger != nullptr) {
+      logger::global_logger->add_on_log_callback([this](int level, const char *tag, const char *message) {
+        // publish log message
+        this->send_log_message(level, tag, message);
+      });
+    }
+#endif
+  }
 }
 
 void BLEMaintenanceHandler::onWrite(BLECharacteristic *characteristic) {
   if (characteristic == ble_command_characteristic) {
-    global_ble_controller->execute_in_loop([this](){ on_command_written(); });
+    global_ble_controller->execute_in_loop([this](){
+      on_command_written(ble_command_characteristic->getValue());
+    });
   } else {
     ESP_LOGW(TAG, "Unknown characteristic written!");
   }
 }
 
-void BLEMaintenanceHandler::on_command_written() {
-  string command_line = ble_command_characteristic->getValue();
+void BLEMaintenanceHandler::on_command_written(string command_line) {
   ESP_LOGD(TAG, "Received BLE command: %s", command_line.c_str());
   vector<string> tokens = split(command_line);
   if (!tokens.empty()) {
@@ -94,13 +98,16 @@ void BLEMaintenanceHandler::on_command_written() {
 }
 
 void BLEMaintenanceHandler::send_command_result(const string& result_message) {
-  global_ble_controller->execute_in_loop([this, result_message] { 
-     ble_command_characteristic->setValue(result_message);
-  });
+  if (ble_command_characteristic != nullptr) {
+    global_ble_controller->execute_in_loop([this, result_message] {
+      ble_command_characteristic->setValue(result_message);
+    });
+
   // global_ble_controller->execute_in_loop([this, result_message] { 
   //   const uint32_t delay_millis = 50;
   //   App.scheduler.set_timeout(global_ble_controller, "command_result", delay_millis, [this, result_message]{ ble_command_characteristic->setValue(result_message); });
   // });
+  }
 }
 
 bool BLEMaintenanceHandler::is_security_enabled() {
@@ -129,7 +136,7 @@ string remove_logger_magic(const string& message) {
 }
 
 void BLEMaintenanceHandler::send_log_message(int level, const char *tag, const char *message) {
-  if (level <= this->log_level) {
+  if (logging_characteristic != nullptr && level <= this->log_level) {
     logging_characteristic->setValue(remove_logger_magic(message));
     logging_characteristic->notify();
   }

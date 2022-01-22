@@ -57,6 +57,9 @@ public:
   void set_security_mode(BLESecurityMode mode) { security_mode = mode; }
   inline BLESecurityMode get_security_mode() const { return security_mode; }
 
+  void set_maintenance_service_exposed(bool exposed) { maintenance_service_exposed = exposed; }
+  inline bool get_maintenance_service_exposed() const { return maintenance_service_exposed; }
+
   // deprecated
   void set_security_enabled(bool enabled);
   inline bool get_security_enabled() const { return security_mode != NONE; }
@@ -149,6 +152,8 @@ private:
 
   BLESecurityMode security_mode{SECURE};
   bool can_show_pass_key{false};
+
+  bool maintenance_service_exposed{true};
 
   BLEMaintenanceHandler* maintenance_handler;
 

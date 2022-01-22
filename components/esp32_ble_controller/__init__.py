@@ -24,6 +24,7 @@ CONF_BLE_CHARACTERISTICS = "characteristics"
 CONF_BLE_CHARACTERISTIC = "characteristic"
 CONF_BLE_USE_2902 = "use_BLE2902"
 CONF_EXPOSES_COMPONENT = "exposes"
+CONF_EXPOSE_MAINTENANCE_SERVICE = "expose_maintenance_service"
 
 def validate_UUID(value):
     # print("UUID«", value)
@@ -122,6 +123,8 @@ BLEControllerServerDisconnectedTrigger = esp32_ble_controller_ns.class_('BLECont
 CONFIG_SCHEMA = cv.All(cv.only_on_esp32, cv.Schema({
     cv.GenerateID(): cv.declare_id(ESP32BLEController),
 
+    cv.Optional(CONF_EXPOSE_MAINTENANCE_SERVICE, default=True): cv.boolean,
+
     cv.Optional(CONF_BLE_SERVICES): cv.ensure_list(BLE_SERVICE),
 
     cv.Optional(CONF_BLE_COMMANDS): cv.ensure_list(BLE_COMMAND),
@@ -187,6 +190,8 @@ def to_code(config):
 
     security_enabled = SECURTY_MODE_OPTIONS[config[CONF_SECURITY_MODE]]
     cg.add(var.set_security_mode(config[CONF_SECURITY_MODE]))
+
+    cg.add(var.set_maintenance_service_exposed(config[CONF_EXPOSE_MAINTENANCE_SERVICE]))
 
     for conf in config.get(CONF_ON_SHOW_PASS_KEY, []):
         trigger = cg.new_Pvariable(conf[CONF_TRIGGER_ID], var)
