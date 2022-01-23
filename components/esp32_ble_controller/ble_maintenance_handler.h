@@ -14,8 +14,6 @@ using std::vector;
 namespace esphome {
 namespace esp32_ble_controller {
 
-enum class BLEMaintenanceMode : uint8_t { BLE_ONLY, MIXED, WIFI_ONLY };
-
 class BLECommand;
 class BLEControllerCustomCommandExecutionTrigger;
 
@@ -35,8 +33,6 @@ public:
   void add_command(BLECommand* command) { commands.push_back(command); }
   const vector<BLECommand*>& get_commands() const { return commands; }
   void send_command_result(const string& result_message);
-
-  void set_ble_mode(BLEMaintenanceMode mode);
 
 #ifdef USE_LOGGER
   int get_log_level() { return log_level; }

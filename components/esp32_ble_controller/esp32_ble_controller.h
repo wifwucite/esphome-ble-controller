@@ -25,7 +25,9 @@ using std::vector;
 namespace esphome {
 namespace esp32_ble_controller {
 
-enum BLESecurityMode : uint8_t { NONE, SECURE, BOND };
+enum class BLEMaintenanceMode : uint8_t { BLE_ONLY, MIXED, WIFI_ONLY };
+
+enum class BLESecurityMode : uint8_t { NONE, SECURE, BOND };
 
 class BLEControllerCustomCommandExecutionTrigger;
 
@@ -59,7 +61,7 @@ public:
 
   // deprecated
   void set_security_enabled(bool enabled);
-  inline bool get_security_enabled() const { return security_mode != NONE; }
+  inline bool get_security_enabled() const { return security_mode != BLESecurityMode::NONE; }
 
   // setup
 
@@ -147,7 +149,7 @@ private:
   BLEMaintenanceMode ble_mode;
   ESPPreferenceObject ble_mode_preference;
 
-  BLESecurityMode security_mode{SECURE};
+  BLESecurityMode security_mode{BLESecurityMode::SECURE};
   bool can_show_pass_key{false};
 
   BLEMaintenanceHandler* maintenance_handler;

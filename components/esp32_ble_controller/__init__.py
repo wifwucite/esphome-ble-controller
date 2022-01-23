@@ -74,7 +74,7 @@ BLE_COMMAND = cv.Schema({
 
 # security mode enumeration #####
 CONF_SECURITY_MODE = 'security_mode'
-BLESecurityMode = esp32_ble_controller_ns.enum("BLESecurityMode")
+BLESecurityMode = esp32_ble_controller_ns.enum("BLESecurityMode", is_class = True)
 CONF_SECURITY_MODE_NONE = 'none' # no security, no bonding
 CONF_SECURITY_MODE_BOND = 'bond' # no secure connection, no man-in-the-middle protection, just bonding (pairing)
 CONF_SECURITY_MODE_SECURE = 'secure' # default: bonding, secure connection, MITM protection
