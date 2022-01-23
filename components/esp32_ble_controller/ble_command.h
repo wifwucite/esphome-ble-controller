@@ -43,12 +43,22 @@ public:
   virtual void execute(const vector<string>& arguments) const override;
 };
 
+// ble-maintenance ///////////////////////////////////////////////////////////////////////////////////////////////
+
+class BLECommandSwitchMaintenanceOnOrOff : public BLECommand {
+public:
+  BLECommandSwitchMaintenanceOnOrOff();
+  virtual ~BLECommandSwitchMaintenanceOnOrOff() {}
+
+  virtual void execute(const vector<string>& arguments) const override;
+};
+
 // ble-services ///////////////////////////////////////////////////////////////////////////////////////////////
 
-class BLECommandSwitchServicesOnOrOff : public BLECommand {
+class BLECommandSwitchComponentServicesOnOrOff : public BLECommand {
 public:
-  BLECommandSwitchServicesOnOrOff();
-  virtual ~BLECommandSwitchServicesOnOrOff() {}
+  BLECommandSwitchComponentServicesOnOrOff();
+  virtual ~BLECommandSwitchComponentServicesOnOrOff() {}
 
   virtual void execute(const vector<string>& arguments) const override;
 };

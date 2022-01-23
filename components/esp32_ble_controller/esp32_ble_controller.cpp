@@ -59,6 +59,18 @@ void ESP32BLEController::add_on_disconnected_callback(std::function<void()>&& tr
   on_disconnected_callbacks.add(std::move(trigger_function));
 }
 
+BLEMaintenanceMode set_feature(BLEMaintenanceMode current_mode, BLEMaintenanceMode feature, bool is_set) {
+  uint8_t new_mode = static_cast<uint8_t>(current_mode) & (~static_cast<uint8_t>(feature));
+  if (is_set) {
+    new_mode |= static_cast<uint8_t>(feature);
+  }
+  return static_cast<BLEMaintenanceMode>(new_mode);
+}
+
+void ESP32BLEController::set_maintenance_service_exposed_after_flash(bool exposed) {
+  initial_ble_mode_after_flashing = set_feature(initial_ble_mode_after_flashing, BLEMaintenanceMode::MAINTENANCE_SERVICE, exposed);    
+}
+
 void ESP32BLEController::set_security_enabled(bool enabled) {
   set_security_mode(BLESecurityMode::SECURE);
 }
@@ -138,9 +150,11 @@ void ESP32BLEController::setup_ble_server_and_services() {
   ble_server = BLEDevice::createServer();
   ble_server->setCallbacks(this);
 
-  maintenance_handler->setup(ble_server);
+  if (get_maintenance_service_exposed()) {
+    maintenance_handler->setup(ble_server);
+  }
 
-  if (get_ble_mode() != BLEMaintenanceMode::WIFI_ONLY) {
+  if (get_component_services_exposed()) {
     setup_ble_services_for_components();
   }
 }
@@ -265,34 +279,30 @@ void ESP32BLEController::initialize_ble_mode() {
   // Note: We include the compilation time to force a reset after flashing new firmware
   ble_mode_preference = global_preferences->make_preference<uint8_t>(fnv1_hash("ble-mode#" + App.get_compilation_time()));
 
-  uint8_t mode;
-  if (!ble_mode_preference.load(&mode)) {
-    mode = (uint8_t) BLEMaintenanceMode::BLE_ONLY;
+  if (!ble_mode_preference.load(&ble_mode)) {
+    ble_mode = initial_ble_mode_after_flashing;
   }
 
-  ble_mode = static_cast<BLEMaintenanceMode>(mode);
-  
-  ESP_LOGCONFIG(TAG, "BLE mode: %d", mode);
+  ESP_LOGCONFIG(TAG, "BLE mode: %d", static_cast<uint8_t>(ble_mode));
 }
 
-void ESP32BLEController::set_ble_mode(BLEMaintenanceMode mode) {
-  set_ble_mode((uint8_t) mode);
-}
+void ESP32BLEController::switch_ble_mode(BLEMaintenanceMode newMode) {
+  if (ble_mode != newMode) {
+    ESP_LOGI(TAG, "Switching BLE mode to %d and rebooting", static_cast<uint8_t>(newMode));
 
-void ESP32BLEController::set_ble_mode(uint8_t newMode) {
-  if (newMode > (uint8_t) BLEMaintenanceMode::WIFI_ONLY) {
-    ESP_LOGI(TAG, "Ignoring unsupported BLE mode %d", newMode);
-    return;
-  }
-
-  ESP_LOGI(TAG, "Updating BLE mode to %d", newMode);
-  BLEMaintenanceMode newBleMode = static_cast<BLEMaintenanceMode>(newMode);
-  if (ble_mode != newBleMode) {
-    ble_mode = newBleMode;
+    ble_mode = newMode;
     ble_mode_preference.save(&ble_mode);
 
     App.safe_reboot();
   }
+}
+
+void ESP32BLEController::switch_maintenance_service_exposed(bool exposed) {
+  switch_ble_mode(set_feature(ble_mode, BLEMaintenanceMode::MAINTENANCE_SERVICE, exposed));
+}
+
+void ESP32BLEController::switch_component_services_exposed(bool exposed) {
+  switch_ble_mode(set_feature(ble_mode, BLEMaintenanceMode::COMPONENT_SERVICES, exposed));
 }
 
 void ESP32BLEController::dump_config() {

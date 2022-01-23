@@ -17,7 +17,7 @@ ESP32BLEController = esp32_ble_controller_ns.class_('ESP32BLEController', cg.Com
 
 ### Configuration validation ############################################################################################
 
-# BLE services and characteristics #####
+# BLE component services and characteristics #####
 CONF_BLE_SERVICES = "services"
 CONF_BLE_SERVICE = "service"
 CONF_BLE_CHARACTERISTICS = "characteristics"
@@ -72,6 +72,9 @@ BLE_COMMAND = cv.Schema({
     }),
 })
 
+# BLE maintenance services #####
+CONF_EXPOSE_MAINTENANCE_SERVICE = "maintenance"
+
 # security mode enumeration #####
 CONF_SECURITY_MODE = 'security_mode'
 BLESecurityMode = esp32_ble_controller_ns.enum("BLESecurityMode", is_class = True)
@@ -125,6 +128,8 @@ CONFIG_SCHEMA = cv.All(cv.only_on_esp32, cv.Schema({
     cv.Optional(CONF_BLE_SERVICES): cv.ensure_list(BLE_SERVICE),
 
     cv.Optional(CONF_BLE_COMMANDS): cv.ensure_list(BLE_COMMAND),
+
+    cv.Optional(CONF_EXPOSE_MAINTENANCE_SERVICE, default=True): cv.boolean,
 
     cv.Optional(CONF_SECURITY_MODE, default=CONF_SECURITY_MODE_SECURE): cv.enum(SECURTY_MODE_OPTIONS),
 
@@ -184,6 +189,8 @@ def to_code(config):
 
     for cmd in config.get(CONF_BLE_COMMANDS, []):
         yield to_code_command(var, cmd)
+
+    cg.add(var.set_maintenance_service_exposed_after_flash(config[CONF_EXPOSE_MAINTENANCE_SERVICE]))
 
     security_enabled = SECURTY_MODE_OPTIONS[config[CONF_SECURITY_MODE]]
     cg.add(var.set_security_mode(config[CONF_SECURITY_MODE]))

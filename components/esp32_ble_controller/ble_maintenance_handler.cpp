@@ -23,9 +23,10 @@ namespace esp32_ble_controller {
 
 static const char *TAG = "ble_maintenance_handler";
 
-BLEMaintenanceHandler::BLEMaintenanceHandler() {
+BLEMaintenanceHandler::BLEMaintenanceHandler() : ble_command_characteristic(nullptr) {
   commands.push_back(new BLECommandHelp());
-  commands.push_back(new BLECommandSwitchServicesOnOrOff());
+  commands.push_back(new BLECommandSwitchMaintenanceOnOrOff());
+  commands.push_back(new BLECommandSwitchComponentServicesOnOrOff());
 #ifdef USE_WIFI
   commands.push_back(new BLECommandWifiConfiguration());
 #endif
@@ -33,6 +34,9 @@ BLEMaintenanceHandler::BLEMaintenanceHandler() {
   commands.push_back(new BLECommandVersion());
 
 #ifdef USE_LOGGER
+  log_level = ESPHOME_LOG_LEVEL;
+  logging_characteristic = nullptr;
+
   commands.push_back(new BLECommandLogLevel());
 #endif
 }
@@ -52,8 +56,7 @@ void BLEMaintenanceHandler::setup(BLEServer* ble_server) {
   service->start();
 
 #ifdef USE_LOGGER
-  log_level = ESPHOME_LOG_LEVEL;
-  if (global_ble_controller->get_ble_mode() != BLEMaintenanceMode::BLE_ONLY) {
+  if (!global_ble_controller->get_component_services_exposed()) {
     log_level = ESPHOME_LOG_LEVEL_CONFIG;
   }
 
@@ -94,9 +97,12 @@ void BLEMaintenanceHandler::on_command_written() {
 }
 
 void BLEMaintenanceHandler::send_command_result(const string& result_message) {
-  global_ble_controller->execute_in_loop([this, result_message] { 
-     ble_command_characteristic->setValue(result_message);
-  });
+  if (ble_command_characteristic != nullptr) {
+    global_ble_controller->execute_in_loop([this, result_message] { 
+      ble_command_characteristic->setValue(result_message);
+    });
+  }
+
   // global_ble_controller->execute_in_loop([this, result_message] { 
   //   const uint32_t delay_millis = 50;
   //   App.scheduler.set_timeout(global_ble_controller, "command_result", delay_millis, [this, result_message]{ ble_command_characteristic->setValue(result_message); });
@@ -129,7 +135,7 @@ string remove_logger_magic(const string& message) {
 }
 
 void BLEMaintenanceHandler::send_log_message(int level, const char *tag, const char *message) {
-  if (level <= this->log_level) {
+  if (logging_characteristic != nullptr && level <= this->log_level) {
     logging_characteristic->setValue(remove_logger_magic(message));
     logging_characteristic->notify();
   }

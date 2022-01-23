@@ -76,6 +76,11 @@ esp32_ble_controller:
   # This automation is not available for the "none" mode, optional for the "bond" mode, and required for the "secure" mode.
   security_mode: secure
 
+  # allows to disable the maintenance service, default is 'true'
+  # When 'false', the maintenance service is not exposed, which provides at least some protection when security mode is "none".
+  # Note: Writeable characteristics like those for switches or fans may still be written by basically anyone.
+  maintenance: true
+
   # automation that is invoked when the pass key should be displayed, the pass key is available in the automation as "pass_key" variable of type std::string (not available if security mode is "none")
   # the example below just logs the pass keys
   on_show_pass_key:
@@ -104,7 +109,7 @@ Note: On some computers (like the MacBook Pro for example) the very first bondin
 
 ### Maintenance service
 
-The maintenance BLE service is provided implicitly when you include `esp32_ble_controller` in your yaml configuration. It provides two characteristics:
+The maintenance BLE service is provided implicitly when you include `esp32_ble_controller` in your yaml configuration unless you disable it explicitly via the `maintenance` property. It provides two characteristics:
 
 * Command channel (UTF-8 string, read-write):
 Allows to send commands to the ESP32 and receives answers back from it. A command is a string which consists of the name of the command and (possibly) arguments, separated by spaces.
@@ -112,8 +117,10 @@ You can define your own custom commands in yaml as described below in detail.
 There are also some built-in commands, which are always available:
   * help [&lt;command>]:
     Without argument, it lists all available commands. When the name of a command is given like in "help log-level" it displays a specific description for this command.
+  * ble-maintenance [off]:
+    Switches the maintenance service off and boots the device. After the boot the maintenance service will **not be availble anymore until you flash your device again**. Thus you can set up your device with the maintenance service enabled and disable that service as soon as everything is running (if you are operating your device in an insecure mode).
   * ble-services [on|off]:
-    Switches the component related (non-maintenance) BLE services on or off. You may wonder why one should switch off these services. On most ESP32 boards both BLE and WiFi share the same physical 2,4 GHz antenna on the ESP32. So, too much traffic on both of them can cause it to crash and reboot. Short-lived WiFi connections for sending MQTT messages work fine with services enabled. However, when connecting to the [web server](https://esphome.io/components/web_server.html) or for [OTA updates](https://esphome.io/components/ota.html) services should be disabled. (Note that ESPHome permits configurations without the WiFi component, so if you encounter problems with BLE you could try disabling WiFi completely.)
+    Switches the component related (non-maintenance) BLE services on or off and boots the device. You may wonder why one should switch off these services. On most ESP32 boards both BLE and WiFi share the same physical 2,4 GHz antenna on the ESP32. So, too much traffic on both of them can cause it to crash and reboot. Short-lived WiFi connections for sending MQTT messages work fine with services enabled. However, when connecting to the [web server](https://esphome.io/components/web_server.html) or for [OTA updates](https://esphome.io/components/ota.html) services should be disabled. (Note that ESPHome permits configurations without the WiFi component, so if you encounter problems with BLE you could try disabling WiFi completely.)
   * wifi-config &lt;ssid> &lt;password> [hidden]:
     Sets the SSID and the password to use for connecting to WiFi. The optional 'hidden' argument marks the network as hidden network. It is recommended to use this command only when security is enabled. You can also use "wifi-config clear" to clear the WiFi configuration; then the default credentials (compiled into the firmware) will be used. (This command is only available if the WiFi component has been configured at all.)
   * parings [clear]:

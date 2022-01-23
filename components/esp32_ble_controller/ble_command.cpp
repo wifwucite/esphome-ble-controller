@@ -46,21 +46,29 @@ void BLECommandHelp::execute(const vector<string>& arguments) const {
   }
 }
 
-// ble-services ///////////////////////////////////////////////////////////////////////////////////////////////
+// ble-maintenance ///////////////////////////////////////////////////////////////////////////////////////////////
 
-BLECommandSwitchServicesOnOrOff::BLECommandSwitchServicesOnOrOff() : BLECommand("ble-services", "'ble-services on|off' enables or disables the non-maintenance BLE services.") {}
+BLECommandSwitchMaintenanceOnOrOff::BLECommandSwitchMaintenanceOnOrOff() : BLECommand("ble-maintenance", "'ble-maintenance off' disables the maintenance BLE service.") {}
 
-void BLECommandSwitchServicesOnOrOff::execute(const vector<string>& arguments) const {
+void BLECommandSwitchMaintenanceOnOrOff::execute(const vector<string>& arguments) const {
   if (!arguments.empty()) {
     const string& on_or_off = arguments[0];
-    if (on_or_off == "off") {
-      global_ble_controller->set_ble_mode(BLEMaintenanceMode::WIFI_ONLY);
-    } else {
-      global_ble_controller->set_ble_mode(BLEMaintenanceMode::MIXED);
-    }
+    global_ble_controller->switch_maintenance_service_exposed(on_or_off != "off");
   }
-  BLEMaintenanceMode mode = global_ble_controller->get_ble_mode();
-  string enabled_or_disabled = mode == BLEMaintenanceMode::WIFI_ONLY ? "disabled" : "enabled";
+  string enabled_or_disabled = global_ble_controller->get_component_services_exposed() ? "disabled" : "enabled";
+  set_result("Maintenance services is " + enabled_or_disabled +".");
+}
+
+// ble-services ///////////////////////////////////////////////////////////////////////////////////////////////
+
+BLECommandSwitchComponentServicesOnOrOff::BLECommandSwitchComponentServicesOnOrOff() : BLECommand("ble-services", "'ble-services on|off' enables or disables the non-maintenance BLE services.") {}
+
+void BLECommandSwitchComponentServicesOnOrOff::execute(const vector<string>& arguments) const {
+  if (!arguments.empty()) {
+    const string& on_or_off = arguments[0];
+    global_ble_controller->switch_component_services_exposed(on_or_off != "off");
+  }
+  string enabled_or_disabled = global_ble_controller->get_component_services_exposed() ? "disabled" : "enabled";
   set_result("Non-maintenance services are " + enabled_or_disabled +".");
 }
 

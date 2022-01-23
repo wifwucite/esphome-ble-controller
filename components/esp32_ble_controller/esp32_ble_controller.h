@@ -25,7 +25,7 @@ using std::vector;
 namespace esphome {
 namespace esp32_ble_controller {
 
-enum class BLEMaintenanceMode : uint8_t { BLE_ONLY, MIXED, WIFI_ONLY };
+enum class BLEMaintenanceMode : uint8_t { MAINTENANCE_SERVICE = 1, COMPONENT_SERVICES = 2, ALL = 3 };
 
 enum class BLESecurityMode : uint8_t { NONE, SECURE, BOND };
 
@@ -56,6 +56,8 @@ public:
   void add_on_connected_callback(std::function<void()>&& trigger_function);
   void add_on_disconnected_callback(std::function<void()>&& trigger_function);
 
+  void set_maintenance_service_exposed_after_flash(bool exposed);
+
   void set_security_mode(BLESecurityMode mode) { security_mode = mode; }
   inline BLESecurityMode get_security_mode() const { return security_mode; }
 
@@ -76,8 +78,11 @@ public:
   void loop() override;
 
   inline BLEMaintenanceMode get_ble_mode() const { return ble_mode; }
-  void set_ble_mode(BLEMaintenanceMode mode);
-  void set_ble_mode(uint8_t mode);
+  bool get_maintenance_service_exposed() const { return static_cast<uint8_t>(ble_mode) & static_cast<uint8_t>(BLEMaintenanceMode::MAINTENANCE_SERVICE); }
+  bool get_component_services_exposed() const { return static_cast<uint8_t>(ble_mode) & static_cast<uint8_t>(BLEMaintenanceMode::COMPONENT_SERVICES); }
+  void switch_ble_mode(BLEMaintenanceMode mode);
+  void switch_maintenance_service_exposed(bool exposed);
+  void switch_component_services_exposed(bool exposed);
 
 #ifdef USE_LOGGER
   int get_log_level() { return maintenance_handler->get_log_level(); }
@@ -146,6 +151,7 @@ private:
 private:
   BLEServer* ble_server;
 
+  BLEMaintenanceMode initial_ble_mode_after_flashing{BLEMaintenanceMode::ALL};
   BLEMaintenanceMode ble_mode;
   ESPPreferenceObject ble_mode_preference;
 
