@@ -69,5 +69,25 @@ public:
   BLEControllerCustomCommandExecutionTrigger(ESP32BLEController* controller) {}
 };
 
+// actions for BLE maintenance service ////////////////////////////////////////////////////////////////////////////////////
+
+template<typename... Ts> class TurnOnMaintenanceServiceAction : public Action<Ts...> {
+public:
+  void play(Ts... x) override { global_ble_controller->switch_maintenance_service_exposed(true); }
+};
+
+template<typename... Ts> class TurnOffMaintenanceServiceAction : public Action<Ts...> {
+public:
+  void play(Ts... x) override { global_ble_controller->switch_maintenance_service_exposed(false); }
+};
+
+template<typename... Ts> class ToggleMaintenanceServiceAction : public Action<Ts...> {
+public:
+  void play(Ts... x) override {
+    const bool exposed = global_ble_controller->get_maintenance_service_exposed();
+    global_ble_controller->switch_maintenance_service_exposed(!exposed); 
+  }
+};
+
 } // namespace esp32_ble_controller
 } // namespace esphome

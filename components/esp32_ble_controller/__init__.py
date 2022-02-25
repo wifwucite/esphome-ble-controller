@@ -213,7 +213,11 @@ def to_code(config):
 
     cg.add_library("ESP32 BLE Arduino", "1.0.1");
 
-### Automation: ble_cmd.set_result ###
+### Automation actions ############################################################################################
+
+GLOBAL_BLE_CONTROLLER_VAR = MockObj(esp32_ble_controller_ns.global_ble_controller, "->")
+
+### Automation action: ble_cmd.send_result ###
 
 def maybe_simple_message(schema):
     def validator(value):
@@ -244,25 +248,36 @@ def validate_printf(value):
         )
     return value
 
-CONF_AUTO_BLE_CMD_SET_RESULT = "ble_cmd.send_result"
-AUTO_BLE_CMD_SET_RESULT_SCHEMA = cv.All(
+BLE_CMD_SET_RESULT_ACTION_SCHEMA = cv.All(
     maybe_simple_message(
         {
             cv.Required(CONF_FORMAT): cv.string,
             cv.Optional(CONF_ARGS, default=list): cv.ensure_list(cv.lambda_),
-
         }
     ),
     validate_printf,
 )
 
-GLOBAL_BLE_CONTROLLER_VAR = MockObj(esp32_ble_controller_ns.global_ble_controller, "->")
-
-@automation.register_action(CONF_AUTO_BLE_CMD_SET_RESULT, LambdaAction, AUTO_BLE_CMD_SET_RESULT_SCHEMA)
-async def logger_log_action_to_code(config, action_id, template_arg, args):
+@automation.register_action("ble_cmd.send_result", LambdaAction, BLE_CMD_SET_RESULT_ACTION_SCHEMA)
+async def ble_cmd_set_result_action_to_code(config, action_id, template_arg, args):
     args_ = [cg.RawExpression(str(x)) for x in config[CONF_ARGS]]
 
     text = str(cg.statement(GLOBAL_BLE_CONTROLLER_VAR.send_command_result(config[CONF_FORMAT], *args_)))
 
     lambda_ = await cg.process_lambda(Lambda(text), args, return_type=cg.void)
     return cg.new_Pvariable(action_id, template_arg, lambda_)
+
+### Automation action: ble_maintenance.toggle/turn_on/turn_off ###
+
+ToggleAction = esp32_ble_controller_ns.class_("ToggleMaintenanceServiceAction", automation.Action)
+TurnOffAction = esp32_ble_controller_ns.class_("TurnOffMaintenanceServiceAction", automation.Action)
+TurnOnAction = esp32_ble_controller_ns.class_("TurnOnMaintenanceServiceAction", automation.Action)
+
+BLE_MAINTENANCE_ACTION_SCHEMA = cv.Schema({}) # no arguments required
+
+@automation.register_action("ble_maintenance.toggle", ToggleAction, BLE_MAINTENANCE_ACTION_SCHEMA)
+@automation.register_action("ble_maintenance.turn_off", TurnOffAction, BLE_MAINTENANCE_ACTION_SCHEMA)
+@automation.register_action("ble_maintenance.turn_on", TurnOnAction, BLE_MAINTENANCE_ACTION_SCHEMA)
+async def ble_maintenance_toggle_to_code(config, action_id, template_arg, args):
+    print(config, action_id, template_arg, args)
+    return cg.new_Pvariable(action_id, template_arg)
