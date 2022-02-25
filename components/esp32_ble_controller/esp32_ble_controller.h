@@ -117,7 +117,7 @@ private:
   void on_binary_sensor_update(binary_sensor::BinarySensor *obj, bool state);
 #endif
 #ifdef USE_FAN
-  void on_fan_update(fan::FanState *obj);
+  void on_fan_update(fan::Fan *obj);
 #endif
 #ifdef USE_LIGHT
   void on_light_update(light::LightState *obj);

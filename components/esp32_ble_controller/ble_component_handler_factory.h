@@ -10,7 +10,7 @@
 #ifdef USE_COVER
 #endif
 #ifdef USE_FAN
-#include "esphome/components/fan/fan_state.h"
+#include "esphome/components/fan/fan.h"
 #endif
 #ifdef USE_LIGHT
 #endif
@@ -47,7 +47,7 @@ public:
 #endif
 
 #ifdef USE_FAN
-  static BLEComponentHandlerBase* create_fan_handler(fan::FanState* component, const BLECharacteristicInfoForHandler& characteristic_info);
+  static BLEComponentHandlerBase* create_fan_handler(fan::Fan* component, const BLECharacteristicInfoForHandler& characteristic_info);
 #endif
 
 #ifdef USE_LIGHT
