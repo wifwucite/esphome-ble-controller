@@ -25,7 +25,7 @@ using std::vector;
 namespace esphome {
 namespace esp32_ble_controller {
 
-enum class BLEMaintenanceMode : uint8_t { MAINTENANCE_SERVICE = 1, COMPONENT_SERVICES = 2, ALL = 3 };
+enum class BLEMaintenanceMode : uint8_t {  MAINTENANCE_SERVICE = 1, COMPONENT_SERVICES = 2, NONE = 0, ALL = 3 };
 
 enum class BLESecurityMode : uint8_t { NONE, SECURE, BOND };
 

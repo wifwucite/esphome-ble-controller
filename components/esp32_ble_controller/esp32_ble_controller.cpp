@@ -78,9 +78,14 @@ void ESP32BLEController::set_security_enabled(bool enabled) {
 /// setup ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void ESP32BLEController::setup() {
-  ESP_LOGCONFIG(TAG, "Setting up BLE controller...");
+  ESP_LOGCONFIG(TAG, "Setting up BLE controller ...");
 
   initialize_ble_mode();
+
+  if (ble_mode == BLEMaintenanceMode::NONE) {
+    ESP_LOGCONFIG(TAG, "BLE inactive");
+    return;
+  }
 
   #ifdef USE_WIFI
   wifi_configuration_handler.setup();
@@ -306,6 +311,10 @@ void ESP32BLEController::switch_component_services_exposed(bool exposed) {
 }
 
 void ESP32BLEController::dump_config() {
+  if (ble_mode == BLEMaintenanceMode::NONE) {
+    return;
+  }
+  
   ESP_LOGCONFIG(TAG, "Bluetooth Low Energy Controller:");
   ESP_LOGCONFIG(TAG, "  BLE device address: %s", BLEDevice::getAddress().toString().c_str());
   ESP_LOGCONFIG(TAG, "  BLE mode: %d", (uint8_t) ble_mode);
