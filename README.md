@@ -7,7 +7,7 @@ In addition, there is a command channel, which allows to configure the WiFi cred
 ⚠️ **Note**: This controller only works with ESP32 micro-controllers, not with ESP8266 chips because they do not offer built-in BLE support.
 
 ## Installation
-This component is compatible with ESPHome 2021.11.0 or later. (For ESPHome versions before 2021.10, please try release 0.4.0 of this component.) To install this component you do not need to download or copy anything, you can just refer to this external component from the yaml file as shown below.
+This component is compatible with ESPHome 2022.12.0 or later. (For earlier ESPHome releases, please try an earlier version of this component.) To install this component you do not need to download or copy anything, you can just refer to this external component from the yaml file as shown below.
 
 ## Configuration
 
