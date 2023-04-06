@@ -205,3 +205,96 @@ esp32_ble_controller:
       - display.page.show: page_standard
       - component.update: my_display
 ```
+
+### Light and switch
+
+Basic example of direct communication between ESPHOME based client (light) and momentary swtich. Pins in example based on M5stack AtomS3 devices.
+
+⚠️ **Note**: BLE MAC address can be different than WiFi MAC address, make sure you are using correct one
+
+#### Switch configuration
+```yaml
+substitutions:
+  hostname: demo-switch-ble
+  device_id: demo_switch_ble
+  comment: ESP NOW EspHome ble demo switch
+  mac_light: "f4:12:fa:61:00:f5"
+  switch_button_id: button0
+  light_peer_id: demo_light
+  light_virutal_switch_uuid: 32f40d3a-d24d-11ed-afa1-0242ac120002
+  light_control_service_uuid: 2dc01d40-d24d-11ed-afa1-0242ac120002
+
+ble_client:
+  - mac_address: ${mac_light}
+    id: ${light_peer_id}_client
+    on_connect:
+      then:
+        - lambda: |-
+            ESP_LOGD("ble_client", "Connected to ${light_peer_id}");
+
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: GPIO41
+    id: ${switch_button_id}
+    name: ${switch_button_id}
+    icon: "mdi:gesture-tap-button"
+    on_release:
+      then:
+        - logger.log: "Toggling the light using BLE"
+        - ble_client.ble_write:
+            id: ${light_peer_id}_client
+            service_uuid: ${light_control_service_uuid}
+            characteristic_uuid: ${light_virutal_switch_uuid}
+            value: 1
+```
+
+#### Light configuration
+
+```yaml
+substitutions:
+  hostname: demo-light-ble
+  device_id: demo_light_ble
+  mac_light: "f4:12:fa:61:00:f5"
+  light_virutal_switch_uuid: 32f40d3a-d24d-11ed-afa1-0242ac120002
+  light_control_service_uuid: 2dc01d40-d24d-11ed-afa1-0242ac120002
+  light_toggle_command: demo-toggle
+  light_virutal_switch_id: light_virtual_switch
+
+esp32_ble_controller:
+  security_mode: none
+  services:
+    - service: ${light_control_service_uuid}
+      characteristics:
+        - characteristic: ${light_virutal_switch_uuid}
+          exposes: ${light_virutal_switch_id}
+  commands:
+    - command: ${light_toggle_command}
+      description: Toggle the light demo
+      on_execute:
+        - logger.log: "Toggle executed"
+  on_connected:
+    - logger.log: "CSonnected."
+  on_disconnected:
+    - logger.log: "Disconnected."
+
+switch:
+  - platform: template
+    id: ${light_virutal_switch_id}
+    turn_on_action:
+      - logger.log: "Switch ON"
+      - light.toggle: status_led
+    turn_off_action:
+      - logger.log: "Switch OFF"
+      - light.toggle: status_led
+               
+light: 
+  - platform: neopixelbus
+    num_leds: 1
+    variant: WS2812
+    pin: GPIO35
+    id: status_led
+    name: ${hostname} RGB LED
+    default_transition_length: 
+      milliseconds: 0
+```
