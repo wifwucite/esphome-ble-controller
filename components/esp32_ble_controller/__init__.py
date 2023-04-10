@@ -211,6 +211,7 @@ def to_code(config):
         trigger = cg.new_Pvariable(conf[CONF_TRIGGER_ID], var)
         yield automation.build_automation(trigger, [], conf)
 
+    # if there are incompatilibities with the framework set "lib_ldf_mode = deep" in platformio.ini and check the version
     cg.add_library("ESP32 BLE Arduino", "2.0.0");
 
 ### Automation actions ############################################################################################
