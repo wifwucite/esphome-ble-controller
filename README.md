@@ -165,6 +165,8 @@ esp32_ble_controller:
 
 # Examples
 
+## Show pass key on display during authentication
+
 Configuration to show the 6-digit pass key during authentication on a display:
 ![BLE pass key on display](BLE-PassKey.png)
 
@@ -206,22 +208,37 @@ esp32_ble_controller:
       - component.update: my_display
 ```
 
-### Light and switch
+## Integration with ble_client (light and switch example)
 
-Basic example of direct communication between ESPHOME based client (light) and momentary swtich. Pins in example based on M5stack AtomS3 devices.
+This example shows how to integrate with [ble_client](https://esphome.io/components/ble_client.html) (a standard component of ESPHome). In the example we toggle a light with a momentary swith. Why do we need bluetooth? Because in our case the switch and the light are connected to two different ESP32 boards, and we use BLE to "tunnel" the switch press event from one ESP32 (the BLE client) to the other ESP32 (the server).
 
-⚠️ **Note**: BLE MAC address can be different than WiFi MAC address, make sure you are using correct one
+So, our setup looks like this:
+* We have a physical momentary switch connected to a GPIO pin of our first ESP32 board, which will be the BLE client. The physical light is connected to a GPIO pin of our second ESP32 board, which will be the BLE server.
+* On the BLE client, we use a binary sensor compoment to detect when the momentary switch is pressed by a human. We use the [ble_client](https://esphome.io/components/ble_client.html) component to send a value from the client to the server when the switch is pressed.
+* On BLE server, we expose a template switch via this BLE controller component as a characteristic. The BLE client writes to this charactericstic and thus informs the server about button press. The template switch on the server controls the actual light compoment, which turns the physical light on or off.
+* To summarize, the sequence of events is this:
+  * Human presses button of momentary switch connected to the BLE client board.
+  * Binary sensor component detects change of GPIO level and writes to a characteristic on the BLE server (using ``ble_client.ble_write``).
+  * The BLE controller component on the server observes this write and toggles the template switch.
+  * Template switch toggles the light component.
+  * Light component sets the GPIO level on the server side, which controls the physical light.
 
-#### Switch configuration
+The example has been provided [evlo](https://github.com/evlo). Pins in example are based on M5stack AtomS3 devices.
+
+### Switch configuration (BLE client)
+
+⚠️ **Note**: BLE MAC address can be different than WiFi MAC address, make sure you are using correct one.
+
 ```yaml
 substitutions:
   hostname: demo-switch-ble
   device_id: demo_switch_ble
-  comment: ESP NOW EspHome ble demo switch
+  comment: ESPHome ble demo switch
+  # You have to put your server's BLE address here, see server's startup log
   mac_light: "f4:12:fa:61:00:f5"
   switch_button_id: button0
   light_peer_id: demo_light
-  light_virutal_switch_uuid: 32f40d3a-d24d-11ed-afa1-0242ac120002
+  light_virtual_switch_uuid: 32f40d3a-d24d-11ed-afa1-0242ac120002
   light_control_service_uuid: 2dc01d40-d24d-11ed-afa1-0242ac120002
 
 ble_client:
@@ -245,42 +262,44 @@ binary_sensor:
         - ble_client.ble_write:
             id: ${light_peer_id}_client
             service_uuid: ${light_control_service_uuid}
-            characteristic_uuid: ${light_virutal_switch_uuid}
+            characteristic_uuid: ${light_virtual_switch_uuid}
             value: 1
 ```
 
-#### Light configuration
+### Light configuration (BLE server)
 
 ```yaml
 substitutions:
   hostname: demo-light-ble
   device_id: demo_light_ble
   mac_light: "f4:12:fa:61:00:f5"
-  light_virutal_switch_uuid: 32f40d3a-d24d-11ed-afa1-0242ac120002
+  light_virtual_switch_uuid: 32f40d3a-d24d-11ed-afa1-0242ac120002
   light_control_service_uuid: 2dc01d40-d24d-11ed-afa1-0242ac120002
   light_toggle_command: demo-toggle
-  light_virutal_switch_id: light_virtual_switch
+  light_virtual_switch_id: light_virtual_switch
 
 esp32_ble_controller:
   security_mode: none
   services:
     - service: ${light_control_service_uuid}
       characteristics:
-        - characteristic: ${light_virutal_switch_uuid}
-          exposes: ${light_virutal_switch_id}
+        - characteristic: ${light_virtual_switch_uuid}
+          exposes: ${light_virtual_switch_id}
+  # The commands and the events below are for debugging purposes.
   commands:
     - command: ${light_toggle_command}
       description: Toggle the light demo
       on_execute:
         - logger.log: "Toggle executed"
+        - light.toggle: status_led
   on_connected:
-    - logger.log: "CSonnected."
+    - logger.log: "Connected."
   on_disconnected:
     - logger.log: "Disconnected."
 
 switch:
   - platform: template
-    id: ${light_virutal_switch_id}
+    id: ${light_virtual_switch_id}
     turn_on_action:
       - logger.log: "Switch ON"
       - light.toggle: status_led
