@@ -227,7 +227,7 @@ The example has been provided [evlo](https://github.com/evlo). Pins in example a
 
 ### Switch configuration (BLE client)
 
-⚠️ **Note**: BLE MAC address can be different than WiFi MAC address, make sure you are using correct one. The [ble_client](https://esphome.io/components/ble_client.html) component only supports unsafe communication!
+⚠️ **Note**: BLE MAC address can be different than WiFi MAC address, make sure you are using correct one.
 
 ```yaml
 substitutions:
